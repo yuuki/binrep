@@ -3,5 +3,9 @@
   version = "=1.12.9"
 
 [[constraint]]
+  name = "github.com/pkg/errors"
+  version = "=0.8.0"
+
+[[constraint]]
   name = "github.com/kylelemons/godebug"
   revision = "d65d576e9348f5982d7f6d83682b694e731a45c6"
