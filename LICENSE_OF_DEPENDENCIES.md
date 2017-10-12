@@ -1,0 +1,11 @@
+# List
+- github.com/aws/aws-sdk-go
+  - Copyright 2015 Amazon.com, Inc. or its affiliates.
+  - Copyright 2014-2015 Stripe, Inc.
+  - [Apache License Version 2.0](https://github.com/aws/aws-sdk-go/blob/master/LICENSE.txt)
+- github.com/pkg/errors
+  - Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+  - [BSD 2-clause "Simplified" License](https://github.com/pkg/errors/blob/master/LICENSE)
+- github.com/kylelemons/godebug
+  - Copyright 2013 Google Inc.
+  - [Apache License Version 2.0](https://github.com/kylelemons/godebug/blob/master/LICENSE)
