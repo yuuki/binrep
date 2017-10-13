@@ -3,6 +3,7 @@ package command
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
@@ -10,12 +11,12 @@ import (
 )
 
 type PullParam struct {
-	Name     string
-	Endpoint string
-	Version  string
+	BinName   string
+	Timestamp string
+	Endpoint  string
 }
 
-func Pull(param *PullParam, installPath string) error {
+func Pull(param *PullParam, name, installPath string) error {
 	file, err := os.OpenFile(installPath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return errors.Wrapf(err, "failed to open %v", installPath)
@@ -25,9 +26,15 @@ func Pull(param *PullParam, installPath string) error {
 	s3Client := s3.New(sess)
 	log.Println("-->", "Downloading", param.Endpoint, "to", installPath)
 
-	url, err := s3.ParseURL(param.Endpoint, param.Name, param.Version)
+	latest, err := s3Client.LatestTimestamp(param.Endpoint, name)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse url")
+		return err
+	}
+
+	binName := filepath.Base(name)
+	url, err := s3.BuildURL(param.Endpoint, name, latest, binName)
+	if err != nil {
+		return err
 	}
 	if err := s3Client.PullBinary(file, url); err != nil {
 		return err

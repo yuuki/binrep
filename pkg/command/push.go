@@ -3,6 +3,7 @@ package command
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
@@ -10,12 +11,12 @@ import (
 )
 
 type PushParam struct {
-	Name     string
-	Version  string
-	Endpoint string
+	BinName   string
+	Timestamp string
+	Endpoint  string
 }
 
-func Push(param *PushParam, binPath string) error {
+func Push(param *PushParam, name string, binPath string) error {
 	file, err := os.Open(binPath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to open %v", binPath)
@@ -23,9 +24,13 @@ func Push(param *PushParam, binPath string) error {
 
 	sess := session.New()
 	s3Client := s3.New(sess)
-	log.Println("-->", "Uploading", param.Name, "to", param.Endpoint)
+	log.Println("-->", "Uploading", binPath, "to", param.Endpoint)
 
-	url, err := s3.ParseURL(param.Endpoint, param.Name, param.Version)
+	var binName string
+	if param.BinName == "" {
+		binName = filepath.Base(binPath)
+	}
+	url, err := s3.BuildURL(param.Endpoint, name, now(), binName)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse url")
 	}

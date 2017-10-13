@@ -82,85 +82,63 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 }
 
 var pushHelpText = `
-Usage: sbrepo push [options] /path/to/binary
+Usage: sbrepo push [options] <host>/<user>/<project> /path/to/binary
 
 push binary.
 
 Options:
-  --name, -n		software name
   --endpoint, -e	s3 uri
-  --version, -v         binary version
+  --timestamp, -t       binary timestamp
 `
 
 func (cli *CLI) doPush(args []string) error {
 	var param command.PushParam
 	flags := cli.prepareFlags(pushHelpText)
-	flags.StringVar(&param.Name, "n", "", "")
-	flags.StringVar(&param.Name, "name", "", "")
-	flags.StringVar(&param.Version, "v", "", "")
-	flags.StringVar(&param.Version, "version", "", "")
+	flags.StringVar(&param.Timestamp, "t", "", "")
+	flags.StringVar(&param.Timestamp, "timestamp", "", "")
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if param.Name == "" {
-		fmt.Fprint(cli.errStream, pushHelpText)
-		return errors.Errorf("--name required")
-	}
-	if param.Version == "" {
-		fmt.Fprint(cli.errStream, pushHelpText)
-		return errors.Errorf("--version required")
-	}
 	if param.Endpoint == "" {
 		fmt.Fprint(cli.errStream, pushHelpText)
 		return errors.Errorf("--endpoint required")
 	}
-	if len(flags.Args()) < 1 {
+	if len(flags.Args()) != 2 {
 		fmt.Fprint(cli.errStream, pushHelpText)
-		return errors.Errorf("too few arguments")
+		return errors.Errorf("too few or many arguments")
 	}
-	return command.Push(&param, flags.Arg(0))
+	return command.Push(&param, flags.Arg(0), flags.Arg(1))
 }
 
 var pullHelpText = `
-Usage: sbrepo pull [options] /path/to/binary
+Usage: sbrepo pull [options] <host>/<user>/<project> /path/to/binary
 
 pull binary.
 
 Options:
-  --name, -n		software name
   --endpoint, -e	s3 uri
-  --version, -v         binary version
+  --timestamp, -t       binary timestamp
 `
 
 func (cli *CLI) doPull(args []string) error {
 	var param command.PullParam
 	flags := cli.prepareFlags(pullHelpText)
-	flags.StringVar(&param.Name, "n", "", "")
-	flags.StringVar(&param.Name, "name", "", "")
-	flags.StringVar(&param.Version, "v", "", "")
-	flags.StringVar(&param.Version, "version", "", "")
+	flags.StringVar(&param.Timestamp, "t", "", "")
+	flags.StringVar(&param.Timestamp, "timestamp", "", "")
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if param.Name == "" {
-		fmt.Fprint(cli.errStream, pullHelpText)
-		return errors.Errorf("--name required")
-	}
-	if param.Version == "" {
-		fmt.Fprint(cli.errStream, pullHelpText)
-		return errors.Errorf("--version required")
-	}
 	if param.Endpoint == "" {
 		fmt.Fprint(cli.errStream, pullHelpText)
 		return errors.Errorf("--endpoint required")
 	}
-	if len(flags.Args()) < 1 {
+	if len(flags.Args()) != 2 {
 		fmt.Fprint(cli.errStream, pullHelpText)
-		return errors.Errorf("too few arguments")
+		return errors.Errorf("too few or many arguments")
 	}
-	return command.Pull(&param, flags.Arg(0))
+	return command.Pull(&param, flags.Arg(0), flags.Arg(1))
 }
