@@ -11,9 +11,8 @@ import (
 
 type PushParam struct {
 	Name     string
-	Endpoint string
 	Version  string
-	FilePath string
+	Endpoint string
 }
 
 func Push(param *PushParam, binPath string) error {
