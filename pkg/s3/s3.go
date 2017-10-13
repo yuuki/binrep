@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	gos3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/pkg/errors"
@@ -14,6 +15,7 @@ import (
 
 type S3 interface {
 	PushBinary(in io.Reader, url *url.URL) (string, error)
+	PullBinary(w io.WriterAt, url *url.URL) error
 }
 
 type _s3 struct {
@@ -49,4 +51,16 @@ func (s *_s3) PushBinary(in io.Reader, url *url.URL) (string, error) {
 		return "", errors.Wrapf(err, "failed to upload file to %v", url)
 	}
 	return result.Location, nil
+}
+
+// PullBinary pulls the binary file data from S3.
+func (s *_s3) PullBinary(w io.WriterAt, url *url.URL) error {
+	_, err := s.downloader.Download(w, &gos3.GetObjectInput{
+		Bucket: aws.String(url.Host),
+		Key:    aws.String(url.Path),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to upload file to %v", url)
+	}
+	return nil
 }

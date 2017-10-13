@@ -35,8 +35,8 @@ func (cli *CLI) Run(args []string) int {
 	switch args[1] {
 	case "push":
 		err = cli.doPush(args[2:])
-	// case "pull":
-	// 	err = cli.doPull(args[2:])
+	case "pull":
+		err = cli.doPull(args[2:])
 	// case "sync":
 	// 	err = cli.doSync(args[2:])
 	case "-v", "--version":
@@ -121,4 +121,46 @@ func (cli *CLI) doPush(args []string) error {
 		return errors.Errorf("too few arguments")
 	}
 	return command.Push(&param, flags.Arg(0))
+}
+
+var pullHelpText = `
+Usage: sbrepo pull [options] /path/to/binary
+
+pull binary.
+
+Options:
+  --name, -n		software name
+  --endpoint, -e	s3 uri
+  --version, -v         binary version
+`
+
+func (cli *CLI) doPull(args []string) error {
+	var param command.PullParam
+	flags := cli.prepareFlags(pullHelpText)
+	flags.StringVar(&param.Name, "n", "", "")
+	flags.StringVar(&param.Name, "name", "", "")
+	flags.StringVar(&param.Version, "v", "", "")
+	flags.StringVar(&param.Version, "version", "", "")
+	flags.StringVar(&param.Endpoint, "e", "", "")
+	flags.StringVar(&param.Endpoint, "endpoint", "", "")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if param.Name == "" {
+		fmt.Fprint(cli.errStream, pullHelpText)
+		return errors.Errorf("--name required")
+	}
+	if param.Version == "" {
+		fmt.Fprint(cli.errStream, pullHelpText)
+		return errors.Errorf("--version required")
+	}
+	if param.Endpoint == "" {
+		fmt.Fprint(cli.errStream, pullHelpText)
+		return errors.Errorf("--endpoint required")
+	}
+	if len(flags.Args()) < 1 {
+		fmt.Fprint(cli.errStream, pullHelpText)
+		return errors.Errorf("too few arguments")
+	}
+	return command.Pull(&param, flags.Arg(0))
 }

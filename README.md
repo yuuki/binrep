@@ -7,8 +7,8 @@ static binary repository.
 
 ```
 sbrepo push --name droot --endpoint s3://<bucket> --version 0.8.0 ./droot
-sbrepo pull --name droot --endpoint s3://<bucket> --version 0.8.0 --location /usr/local/bin
-sbrepo sync --endpoint s3://<bucket> --location /usr/local/bin
+sbrepo pull --name droot --endpoint s3://<bucket> --version 0.8.0 /usr/local/bin/droot
+sbrepo sync --endpoint s3://<bucket> /usr/local/bin
 ```
 
 install latest version.
