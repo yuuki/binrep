@@ -14,6 +14,12 @@
   version = "v1.28.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jehiah/go-strftime"
+  packages = ["."]
+  revision = "2efbe75097a505e2789f7e39cb9da067b5be8e3e"
+
+[[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
@@ -27,6 +33,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "76e697b72a0ab320deee61615adf1b979a4d74e0ece7688a8747b13369b8c38b"
+  inputs-digest = "c3a01c21625404f0a4d95bf3b76ab7843d1ec3374caebbbd3435141fb27011b3"
   solver-name = "gps-cdcl"
   solver-version = 1

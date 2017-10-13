@@ -9,3 +9,7 @@
 [[constraint]]
   name = "github.com/kylelemons/godebug"
   revision = "d65d576e9348f5982d7f6d83682b694e731a45c6"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jehiah/go-strftime"
