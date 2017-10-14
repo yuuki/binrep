@@ -12,3 +12,6 @@
 - github.com/kylelemons/godebug
   - Copyright 2013 Google Inc.
   - [Apache License Version 2.0](https://github.com/kylelemons/godebug/blob/master/LICENSE)
+- github.com/go-yaml/yaml
+  - No Copyright
+  - [Apache License Version 2.0](https://github.com/go-yaml/yaml/blob/v2/LICENSE)

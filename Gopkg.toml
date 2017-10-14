@@ -13,3 +13,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/jehiah/go-strftime"
+
+[[constraint]]
+  branch = "v2"
+  name = "gopkg.in/yaml.v2"
