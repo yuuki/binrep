@@ -1,0 +1,19 @@
+builds:
+  - main: main.go
+    ldflags: -s -w -X main.build={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - 386
+archive:
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  files:
+    - LICENCE
