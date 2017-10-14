@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -31,7 +30,6 @@ type S3 interface {
 	FindLatestRelease(endpoint, name string) (*release.Release, error)
 	CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error)
 	PushRelease(rel *release.Release) error
-	PullBinary(w io.WriterAt, url *url.URL, binName string) error
 	PullRelease(rel *release.Release, installDir string) error
 }
 
@@ -165,18 +163,6 @@ func (s *_s3) PushRelease(rel *release.Release) error {
 	return nil
 }
 
-// PullBinary pulls the binary file data from S3.
-func (s *_s3) PullBinary(w io.WriterAt, u *url.URL, binName string) error {
-	_, err := s.downloader.Download(w, &s3.GetObjectInput{
-		Bucket: aws.String(u.Host),
-		Key:    aws.String(filepath.Join(u.Path, binName)),
-	})
-	if err != nil {
-		return errors.Wrapf(err, "failed to upload file to %v", u)
-	}
-	return nil
-}
-
 func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 	for _, bin := range rel.Meta.Binaries {
 		path := filepath.Join(installDir, bin.Name)
@@ -184,9 +170,15 @@ func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to open %v", path)
 		}
-		if err := s.PullBinary(file, rel.URL, bin.Name); err != nil {
-			return err
+
+		_, err = s.downloader.Download(file, &s3.GetObjectInput{
+			Bucket: aws.String(rel.URL.Host),
+			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to upload file to %v", rel.URL)
 		}
+
 		if err := bin.ValidateChecksum(file); err != nil {
 			os.Remove(path)
 			return err
