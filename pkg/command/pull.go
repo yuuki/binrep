@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/yuuki/binrep/pkg/s3"
+	"github.com/yuuki/binrep/pkg/storage"
 )
 
 type PullParam struct {
@@ -15,19 +15,20 @@ type PullParam struct {
 
 func Pull(param *PullParam, name, installPath string) error {
 	sess := session.New()
-	s3Client := s3.New(sess)
+	st := storage.New(sess)
+
+	latest, err := st.LatestTimestamp(param.Endpoint, name)
+	if err != nil {
+		return err
+	}
+	url, err := storage.BuildURL(param.Endpoint, name, latest)
+	if err != nil {
+		return err
+	}
+
 	log.Println("-->", "Downloading", param.Endpoint, "to", installPath)
 
-	latest, err := s3Client.LatestTimestamp(param.Endpoint, name)
-	if err != nil {
-		return err
-	}
-
-	url, err := s3.BuildURL(param.Endpoint, name, latest)
-	if err != nil {
-		return err
-	}
-	if err := s3Client.PullBinaries(url, installPath); err != nil {
+	if err := st.PullBinaries(url, installPath); err != nil {
 		return err
 	}
 

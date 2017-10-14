@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	"github.com/yuuki/binrep/pkg/meta"
-	"github.com/yuuki/binrep/pkg/s3"
+	"github.com/yuuki/binrep/pkg/storage"
 )
 
 type PushParam struct {
@@ -25,7 +25,7 @@ func Push(param *PushParam, name string, binPath string) error {
 	}
 
 	sess := session.New(aws.NewConfig())
-	s3Client := s3.New(sess)
+	st := storage.New(sess)
 
 	var binName string
 	if param.BinName == "" {
@@ -35,17 +35,17 @@ func Push(param *PushParam, name string, binPath string) error {
 	if err != nil {
 		return err
 	}
-	url, err := s3.BuildURL(param.Endpoint, bin.Name, bin.Timestamp)
+	url, err := storage.BuildURL(param.Endpoint, bin.Name, bin.Timestamp)
 	if err != nil {
 		return err
 	}
-	if err = s3Client.CreateOrUpdateMeta(url, []*meta.Binary{bin}); err != nil {
+	if err = st.CreateOrUpdateMeta(url, []*meta.Binary{bin}); err != nil {
 		return err
 	}
 
 	log.Println("-->", "Uploading", binPath, "to", param.Endpoint)
 
-	location, err := s3Client.PushBinary(file, url, binName)
+	location, err := st.PushBinary(file, url, binName)
 	if err != nil {
 		return err
 	}

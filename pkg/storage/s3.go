@@ -1,4 +1,4 @@
-package s3
+package storage
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	gos3 "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
@@ -55,7 +55,7 @@ func BuildURL(urlStr string, name, timestamp string) (*url.URL, error) {
 // New creates a S3 client object.
 func New(sess *session.Session) S3 {
 	return &_s3{
-		svc:        gos3.New(sess),
+		svc:        s3.New(sess),
 		uploader:   s3manager.NewUploader(sess),
 		downloader: s3manager.NewDownloader(sess),
 	}
@@ -67,7 +67,7 @@ func (s *_s3) LatestTimestamp(urlStr string, name string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to parse %v", urlStr)
 	}
-	resp, err := s.svc.ListObjectsV2(&gos3.ListObjectsV2Input{
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket:    aws.String(u.Host),
 		Prefix:    aws.String(strings.TrimLeft(u.Path, "/") + "/"),
 		Delimiter: aws.String("/"),
@@ -92,7 +92,7 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*meta.Binary) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal yaml")
 	}
-	_, err = s.svc.PutObject(&gos3.PutObjectInput{
+	_, err = s.svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
@@ -105,14 +105,14 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*meta.Binary) error {
 
 // FindMeta finds metadata from S3, and returns nil if meta.yml is not found.
 func (s *_s3) FindMeta(u *url.URL) (*meta.Meta, error) {
-	resp, err := s.svc.GetObject(&gos3.GetObjectInput{
+	resp, err := s.svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
 	})
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
-			case gos3.ErrCodeNoSuchKey:
+			case s3.ErrCodeNoSuchKey:
 				return nil, nil
 			default:
 			}
@@ -147,7 +147,7 @@ func (s *_s3) CreateOrUpdateMeta(u *url.URL, bins []*meta.Binary) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to unmsarshal meta")
 	}
-	_, err = s.svc.PutObject(&gos3.PutObjectInput{
+	_, err = s.svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
 		Body:   aws.ReadSeekCloser(bytes.NewBuffer(data)),
@@ -174,7 +174,7 @@ func (s *_s3) PushBinary(in io.Reader, url *url.URL, binName string) (string, er
 
 // PullBinary pulls the binary file data from S3.
 func (s *_s3) PullBinary(w io.WriterAt, u *url.URL, binName string) error {
-	_, err := s.downloader.Download(w, &gos3.GetObjectInput{
+	_, err := s.downloader.Download(w, &s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, binName)),
 	})
