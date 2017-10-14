@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	BIN_NAME       = "BINARY"
 	META_FILE_NAME = "meta.yml"
 )
 
