@@ -82,7 +82,7 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 }
 
 var pushHelpText = `
-Usage: binrep push [options] <host>/<user>/<project> /path/to/binary
+Usage: binrep push [options] <host>/<user>/<project> /path/to/binary ...
 
 push binary.
 
@@ -105,11 +105,12 @@ func (cli *CLI) doPush(args []string) error {
 		fmt.Fprint(cli.errStream, pushHelpText)
 		return errors.Errorf("--endpoint required")
 	}
-	if len(flags.Args()) != 2 {
+	argLen := len(flags.Args())
+	if argLen < 2 {
 		fmt.Fprint(cli.errStream, pushHelpText)
-		return errors.Errorf("too few or many arguments")
+		return errors.Errorf("too few arguments")
 	}
-	return command.Push(&param, flags.Arg(0), flags.Arg(1))
+	return command.Push(&param, flags.Arg(0), flags.Args()[1:argLen])
 }
 
 var pullHelpText = `
