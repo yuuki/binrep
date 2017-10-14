@@ -3,8 +3,8 @@ package meta
 import (
 	"crypto/sha1"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"os"
 	"time"
 
 	strftime "github.com/jehiah/go-strftime"
@@ -30,8 +30,8 @@ func (m *Meta) AppendBinary(b *Binary) {
 	m.Binaries = append(m.Binaries, b)
 }
 
-func BuildBinary(f *os.File, name string) (*Binary, error) {
-	sum, err := checksum(f)
+func BuildBinary(r io.Reader, name string) (*Binary, error) {
+	sum, err := checksum(r)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +49,10 @@ func now() string {
 	return strftime.Format("%Y%m%d%H%M%S", t)
 }
 
-func checksum(f *os.File) (string, error) {
-	body, err := ioutil.ReadAll(f)
+func checksum(r io.Reader) (string, error) {
+	body, err := ioutil.ReadAll(r)
 	if err != nil {
-		errors.Errorf("failed to read %v", f.Name())
+		errors.Errorf("failed to read data for checksum")
 	}
 	return fmt.Sprintf("%x", sha1.Sum(body)), nil
 }
