@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
 	strftime "github.com/jehiah/go-strftime"
 	"github.com/pkg/errors"
 )
@@ -25,20 +23,12 @@ type Meta struct {
 	Data     []byte
 }
 
-func New(b *Binary) *Meta {
-	return &Meta{Binaries: []*Binary{b}}
+func New(bins []*Binary) *Meta {
+	return &Meta{Binaries: bins}
 }
 
-func (m *Meta) AppendBinary(b *Binary) {
-	m.Binaries = append(m.Binaries, b)
-}
-
-func (m *Meta) YAMLBytes() ([]byte, error) {
-	var data []byte
-	if err := yaml.Unmarshal(data, m); err != nil {
-		return nil, errors.Wrapf(err, "failed to unmsarshal meta")
-	}
-	return data, nil
+func (m *Meta) AppendBinaries(bins []*Binary) {
+	m.Binaries = append(m.Binaries, bins...)
 }
 
 func BuildBinary(r io.Reader, name string) (*Binary, error) {

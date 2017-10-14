@@ -39,7 +39,7 @@ func Push(param *PushParam, name string, binPath string) error {
 	if err != nil {
 		return err
 	}
-	if err = s3Client.CreateOrUpdateMeta(url, bin); err != nil {
+	if err = s3Client.CreateOrUpdateMeta(url, []*meta.Binary{bin}); err != nil {
 		return err
 	}
 

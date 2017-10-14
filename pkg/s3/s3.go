@@ -30,7 +30,7 @@ const (
 
 type S3 interface {
 	LatestTimestamp(urlStr string, name string) (string, error)
-	CreateOrUpdateMeta(u *url.URL, param *meta.Binary) error
+	CreateOrUpdateMeta(u *url.URL, bins []*meta.Binary) error
 	PushBinary(in io.Reader, url *url.URL, binName string) (string, error)
 	PullBinary(w io.WriterAt, url *url.URL, binName string) error
 	PullBinaries(u *url.URL, installDir string) error
@@ -86,8 +86,8 @@ func (s *_s3) LatestTimestamp(urlStr string, name string) (string, error) {
 	return timestamps[len(timestamps)-1], nil
 }
 
-func (s *_s3) CreateMeta(u *url.URL, param *meta.Binary) error {
-	m := meta.New(param)
+func (s *_s3) CreateMeta(u *url.URL, bins []*meta.Binary) error {
+	m := meta.New(bins)
 	data, err := yaml.Marshal(m)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal yaml")
@@ -98,7 +98,7 @@ func (s *_s3) CreateMeta(u *url.URL, param *meta.Binary) error {
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to put meta.yml into s3 (%v)", param.Name)
+		return errors.Wrapf(err, "failed to put meta.yml into s3 (%s)", u)
 	}
 	return nil
 }
@@ -130,22 +130,22 @@ func (s *_s3) FindMeta(u *url.URL) (*meta.Meta, error) {
 	return &m, nil
 }
 
-func (s *_s3) CreateOrUpdateMeta(u *url.URL, param *meta.Binary) error {
+func (s *_s3) CreateOrUpdateMeta(u *url.URL, bins []*meta.Binary) error {
 	m, err := s.FindMeta(u)
 	if err != nil {
 		return err
 	}
 	if m == nil {
-		if err := s.CreateMeta(u, param); err != nil {
+		if err := s.CreateMeta(u, bins); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	m.AppendBinary(param)
-	data, err := m.YAMLBytes()
+	m.AppendBinaries(bins)
+	data, err := yaml.Marshal(m)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to unmsarshal meta")
 	}
 	_, err = s.svc.PutObject(&gos3.PutObjectInput{
 		Bucket: aws.String(u.Host),
