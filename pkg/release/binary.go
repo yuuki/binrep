@@ -10,10 +10,10 @@ import (
 )
 
 type Binary struct {
-	Name     string `yaml:"name"`
-	Checksum string `yaml:"checksum"`
-	Version  string `yaml:"version,omitempty"`
-	Body     io.Reader
+	Name     string    `yaml:"name"`
+	Checksum string    `yaml:"checksum"`
+	Version  string    `yaml:"version,omitempty"`
+	Body     io.Reader `yaml:"-"`
 }
 
 func BuildBinary(name string, body io.Reader) (*Binary, error) {
@@ -24,6 +24,7 @@ func BuildBinary(name string, body io.Reader) (*Binary, error) {
 	return &Binary{
 		Name:     name,
 		Checksum: sum,
+		Body:     body,
 	}, nil
 }
 
