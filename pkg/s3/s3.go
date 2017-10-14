@@ -103,7 +103,8 @@ func (s *_s3) CreateMeta(u *url.URL, param *meta.Binary) error {
 	return nil
 }
 
-func (s *_s3) CreateOrUpdateMeta(u *url.URL, param *meta.Binary) error {
+// FindMeta finds metadata from S3, and returns nil if meta.yml is not found.
+func (s *_s3) FindMeta(u *url.URL) (*meta.Meta, error) {
 	resp, err := s.svc.GetObject(&gos3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
@@ -112,25 +113,40 @@ func (s *_s3) CreateOrUpdateMeta(u *url.URL, param *meta.Binary) error {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case gos3.ErrCodeNoSuchKey:
-				if err := s.CreateMeta(u, param); err != nil {
-					return err
-				}
-				return nil
+				return nil, nil
 			default:
 			}
 		}
-		return errors.Wrapf(err, "failed to update meta.yml %s", u)
+		return nil, errors.Wrapf(err, "failed to get object from s3 %s", u)
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read meta.yml on s3")
+		return nil, errors.Wrap(err, "failed to read meta.yml on s3")
 	}
-
 	var m meta.Meta
 	if err := yaml.Unmarshal(data, &m); err != nil {
-		return errors.Wrapf(err, "failed to read meta.yml on s3")
+		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
+	return &m, nil
+}
+
+func (s *_s3) CreateOrUpdateMeta(u *url.URL, param *meta.Binary) error {
+	m, err := s.FindMeta(u)
+	if err != nil {
+		return err
+	}
+	if m == nil {
+		if err := s.CreateMeta(u, param); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	m.AppendBinary(param)
+	data, err := m.YAMLBytes()
+	if err != nil {
+		return err
+	}
 	_, err = s.svc.PutObject(&gos3.PutObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
@@ -169,20 +185,12 @@ func (s *_s3) PullBinary(w io.WriterAt, u *url.URL, binName string) error {
 }
 
 func (s *_s3) PullBinaries(u *url.URL, installDir string) error {
-	resp, err := s.svc.GetObject(&gos3.GetObjectInput{
-		Bucket: aws.String(u.Host),
-		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
-	})
+	m, err := s.FindMeta(u)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get object from s3 %s", u)
+		return err
 	}
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read meta.yml on s3")
-	}
-	var m meta.Meta
-	if err := yaml.Unmarshal(data, &m); err != nil {
-		return errors.Wrapf(err, "failed to read meta.yml on s3")
+	if m == nil {
+		return errors.Errorf("meta.yml not found %s", u)
 	}
 	for _, bin := range m.Binaries {
 		path := filepath.Join(installDir, bin.Name)
