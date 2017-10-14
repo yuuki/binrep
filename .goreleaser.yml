@@ -14,4 +14,4 @@ archive:
     - goos: windows
       format: zip
   files:
-    - LICENCE
+    - LICENSE
