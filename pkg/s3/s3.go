@@ -193,6 +193,10 @@ func (s *_s3) PullBinaries(u *url.URL, installDir string) error {
 		if err := s.PullBinary(file, u, bin.Name); err != nil {
 			return err
 		}
+		if err := bin.ValidateChecksum(file); err != nil {
+			os.Remove(path)
+			return err
+		}
 	}
 	return nil
 }

@@ -42,6 +42,17 @@ func BuildBinary(r io.Reader, name string) (*Binary, error) {
 	}, nil
 }
 
+func (b *Binary) ValidateChecksum(r io.Reader) error {
+	sum, err := checksum(r)
+	if err != nil {
+		return err
+	}
+	if b.Checksum != sum {
+		return errors.Errorf("invalid checksum, got %v, want %v", sum, b.Checksum)
+	}
+	return nil
+}
+
 func now() string {
 	t := time.Now()
 	utc, _ := time.LoadLocation("UTC")
