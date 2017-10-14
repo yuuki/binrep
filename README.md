@@ -62,6 +62,10 @@ s3://binrep-repository/
 
 ```
 
+# Terms
+
+- `release`: `<host>/<user>/<project>/<date>/`
+
 # License
 
 [The MIT License](./LICENSE).

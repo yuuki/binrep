@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
-	"github.com/yuuki/binrep/pkg/meta"
+	"github.com/yuuki/binrep/pkg/release"
 	"github.com/yuuki/binrep/pkg/storage"
 )
 
@@ -31,25 +31,22 @@ func Push(param *PushParam, name string, binPath string) error {
 	if param.BinName == "" {
 		binName = filepath.Base(file.Name())
 	}
-	bin, err := meta.BuildBinary(file, binName)
+	// TODO: multiple Binary
+	bin, err := release.BuildBinary(binName, file)
 	if err != nil {
 		return err
 	}
-	url, err := storage.BuildURL(param.Endpoint, bin.Name, bin.Timestamp)
+	rel, err := st.CreateRelease(param.Endpoint, name, []*release.Binary{bin})
 	if err != nil {
-		return err
-	}
-	if err = st.CreateOrUpdateMeta(url, []*meta.Binary{bin}); err != nil {
 		return err
 	}
 
 	log.Println("-->", "Uploading", binPath, "to", param.Endpoint)
 
-	location, err := st.PushBinary(file, url, binName)
-	if err != nil {
+	if err := st.PushRelease(rel); err != nil {
 		return err
 	}
-	log.Println("Uploaded", "to", location)
+	log.Println("Uploaded", "to", rel.URL)
 
 	return nil
 }

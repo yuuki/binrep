@@ -20,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/pkg/errors"
-	"github.com/yuuki/binrep/pkg/meta"
+	"github.com/yuuki/binrep/pkg/release"
 )
 
 const (
@@ -28,27 +28,17 @@ const (
 )
 
 type S3 interface {
-	LatestTimestamp(urlStr string, name string) (string, error)
-	CreateOrUpdateMeta(u *url.URL, bins []*meta.Binary) error
-	PushBinary(in io.Reader, url *url.URL, binName string) (string, error)
+	FindLatestRelease(endpoint, name string) (*release.Release, error)
+	CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error)
+	PushRelease(rel *release.Release) error
 	PullBinary(w io.WriterAt, url *url.URL, binName string) error
-	PullBinaries(u *url.URL, installDir string) error
+	PullRelease(rel *release.Release, installDir string) error
 }
 
 type _s3 struct {
 	svc        s3iface.S3API
 	uploader   s3manageriface.UploaderAPI
 	downloader s3manageriface.DownloaderAPI
-}
-
-// BuildURL builds the binary file url for S3.
-func BuildURL(urlStr string, name, timestamp string) (*url.URL, error) {
-	//TODO: validate version
-	u, err := url.Parse(urlStr + "/" + filepath.Join(name, timestamp))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse %v", urlStr)
-	}
-	return u, nil
 }
 
 // New creates a S3 client object.
@@ -60,8 +50,39 @@ func New(sess *session.Session) S3 {
 	}
 }
 
-// LatestTimestamp gets the latest timestamp.
-func (s *_s3) LatestTimestamp(urlStr string, name string) (string, error) {
+func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error) {
+	latest, err := s.latestTimestamp(endpoint, name)
+	if err != nil {
+		return nil, err
+	}
+	u, err := release.BuildURL(endpoint, name, latest)
+	if err != nil {
+		return nil, err
+	}
+	meta, err := s.FindMeta(u)
+	if err != nil {
+		return nil, err
+	}
+	if meta == nil {
+		return nil, errors.Errorf("meta.yml not found %s", u)
+	}
+	return release.New(meta, u), nil
+}
+
+func (s *_s3) CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error) {
+	u, err := release.BuildURL(endpoint, name, release.Now())
+	if err != nil {
+		return nil, err
+	}
+	meta, err := s.CreateMeta(u, bins)
+	if err != nil {
+		return nil, err
+	}
+	return release.New(meta, u), nil
+}
+
+// latestTimestamp gets the latest timestamp.
+func (s *_s3) latestTimestamp(urlStr string, name string) (string, error) {
 	u, err := url.Parse(urlStr + "/" + name)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to parse %v", urlStr)
@@ -85,11 +106,11 @@ func (s *_s3) LatestTimestamp(urlStr string, name string) (string, error) {
 	return timestamps[len(timestamps)-1], nil
 }
 
-func (s *_s3) CreateMeta(u *url.URL, bins []*meta.Binary) error {
-	m := meta.New(bins)
+func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
+	m := release.NewMeta(bins)
 	data, err := yaml.Marshal(m)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal yaml")
+		return nil, errors.Wrap(err, "failed to marshal yaml")
 	}
 	_, err = s.svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(u.Host),
@@ -97,13 +118,13 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*meta.Binary) error {
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to put meta.yml into s3 (%s)", u)
+		return nil, errors.Wrapf(err, "failed to put meta.yml into s3 (%s)", u)
 	}
-	return nil
+	return m, nil
 }
 
 // FindMeta finds metadata from S3, and returns nil if meta.yml is not found.
-func (s *_s3) FindMeta(u *url.URL) (*meta.Meta, error) {
+func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
@@ -122,53 +143,26 @@ func (s *_s3) FindMeta(u *url.URL) (*meta.Meta, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read meta.yml on s3")
 	}
-	var m meta.Meta
+	var m release.Meta
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
 	return &m, nil
 }
 
-func (s *_s3) CreateOrUpdateMeta(u *url.URL, bins []*meta.Binary) error {
-	m, err := s.FindMeta(u)
-	if err != nil {
-		return err
-	}
-	if m == nil {
-		if err := s.CreateMeta(u, bins); err != nil {
-			return err
+// PushRelease pushes the release into S3.
+func (s *_s3) PushRelease(rel *release.Release) error {
+	for _, bin := range rel.Meta.Binaries {
+		_, err := s.uploader.Upload(&s3manager.UploadInput{
+			Bucket: aws.String(rel.URL.Host),
+			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
+			Body:   bin.Body,
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to upload file to %s", rel.URL)
 		}
-		return nil
 	}
-
-	m.AppendBinaries(bins)
-	data, err := yaml.Marshal(m)
-	if err != nil {
-		return errors.Wrapf(err, "failed to unmsarshal meta")
-	}
-	_, err = s.svc.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(u.Host),
-		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
-		Body:   aws.ReadSeekCloser(bytes.NewBuffer(data)),
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to put meta.yml into s3")
-	}
-
 	return nil
-}
-
-// PushBinary pushes the binary file data into S3.
-func (s *_s3) PushBinary(in io.Reader, url *url.URL, binName string) (string, error) {
-	result, err := s.uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(url.Host),
-		Key:    aws.String(filepath.Join(url.Path, binName)),
-		Body:   in,
-	})
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to upload file to %s", url)
-	}
-	return result.Location, nil
 }
 
 // PullBinary pulls the binary file data from S3.
@@ -183,21 +177,14 @@ func (s *_s3) PullBinary(w io.WriterAt, u *url.URL, binName string) error {
 	return nil
 }
 
-func (s *_s3) PullBinaries(u *url.URL, installDir string) error {
-	m, err := s.FindMeta(u)
-	if err != nil {
-		return err
-	}
-	if m == nil {
-		return errors.Errorf("meta.yml not found %s", u)
-	}
-	for _, bin := range m.Binaries {
+func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
+	for _, bin := range rel.Meta.Binaries {
 		path := filepath.Join(installDir, bin.Name)
 		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			return errors.Wrapf(err, "failed to open %v", path)
 		}
-		if err := s.PullBinary(file, u, bin.Name); err != nil {
+		if err := s.PullBinary(file, rel.URL, bin.Name); err != nil {
 			return err
 		}
 		if err := bin.ValidateChecksum(file); err != nil {

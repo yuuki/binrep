@@ -17,18 +17,15 @@ func Pull(param *PullParam, name, installPath string) error {
 	sess := session.New()
 	st := storage.New(sess)
 
-	latest, err := st.LatestTimestamp(param.Endpoint, name)
-	if err != nil {
-		return err
-	}
-	url, err := storage.BuildURL(param.Endpoint, name, latest)
+	// FindLatestRelease
+	rel, err := st.FindLatestRelease(param.Endpoint, name)
 	if err != nil {
 		return err
 	}
 
 	log.Println("-->", "Downloading", param.Endpoint, "to", installPath)
 
-	if err := st.PullBinaries(url, installPath); err != nil {
+	if err := st.PullRelease(rel, installPath); err != nil {
 		return err
 	}
 
