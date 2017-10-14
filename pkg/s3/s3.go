@@ -20,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/pkg/errors"
-	"github.com/yuuki/sbrepo/pkg/meta"
+	"github.com/yuuki/binrep/pkg/meta"
 )
 
 const (

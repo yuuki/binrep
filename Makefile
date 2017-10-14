@@ -1,5 +1,5 @@
 COMMIT = $$(git describe --always)
-PKG = github.com/yuuki/sbrepo
+PKG = github.com/yuuki/binrep
 PKGS = $$(go list ./... | grep -v vendor)
 
 all: build

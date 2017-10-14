@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
-	"github.com/yuuki/sbrepo/pkg/meta"
-	"github.com/yuuki/sbrepo/pkg/s3"
+	"github.com/yuuki/binrep/pkg/meta"
+	"github.com/yuuki/binrep/pkg/s3"
 )
 
 type PushParam struct {

@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/yuuki/sbrepo/pkg/s3"
+	"github.com/yuuki/binrep/pkg/s3"
 )
 
 type PullParam struct {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/yuuki/sbrepo/pkg/command"
+	"github.com/yuuki/binrep/pkg/command"
 )
 
 // CLI is the command line object.
@@ -58,7 +58,7 @@ func (cli *CLI) Run(args []string) int {
 }
 
 var helpText = `
-Usage: sbrepo [options]
+Usage: binrep [options]
 
   static binary repository.
 
@@ -82,7 +82,7 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 }
 
 var pushHelpText = `
-Usage: sbrepo push [options] <host>/<user>/<project> /path/to/binary
+Usage: binrep push [options] <host>/<user>/<project> /path/to/binary
 
 push binary.
 
@@ -113,7 +113,7 @@ func (cli *CLI) doPush(args []string) error {
 }
 
 var pullHelpText = `
-Usage: sbrepo pull [options] <host>/<user>/<project> /path/to/binary
+Usage: binrep pull [options] <host>/<user>/<project> /path/to/binary
 
 pull binary.
 

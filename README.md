@@ -1,28 +1,28 @@
-sbrepo
+binrep
 ======
 
 Simple static binary repository manager on Amazon S3 as backend storage.
 
 # Overview
 
-`sbrepo` provides a simple way to store and deploy your static binary files such as Go binary. sbrepo pushes the binary files into your S3 bucket, builds the directory layout like `go get` does on the bucket, and pulls the binary files from the bucket.
+`binrep` provides a simple way to store and deploy your static binary files such as Go binary. binrep pushes the binary files into your S3 bucket, builds the directory layout like `go get` does on the bucket, and pulls the binary files from the bucket.
 
-The deployment of (internel) tools written by Go takes a lot more works, especially in the environment with many servers, than that of no-dependent LL scripts such as shell script, Perl, Python, Ruby). Git is an informat approach to the deployment, but git is not for binary management. The next approach is a package manager such apt or yum, but it takes a lot of trouble to make packages. The other approach is just to use a HTTP file server including S3, but it needs uniform and accessible location of the binary files and version management. There, `sbrepo` resolves the problem of the binary management.
+The deployment of (internel) tools written by Go takes a lot more works, especially in the environment with many servers, than that of no-dependent LL scripts such as shell script, Perl, Python, Ruby). Git is an informat approach to the deployment, but git is not for binary management. The next approach is a package manager such apt or yum, but it takes a lot of trouble to make packages. The other approach is just to use a HTTP file server including S3, but it needs uniform and accessible location of the binary files and version management. There, `binrep` resolves the problem of the binary management.
 
 # Usage
 
 ## Prepareation
 
-- Create S3 bucket for `sbrepo`.
-- Install `sbrepo` binary, see https://github.com/yuuki/sbrepo/releases .
+- Create S3 bucket for `binrep`.
+- Install `binrep` binary, see https://github.com/yuuki/binrep/releases .
 
 ## Commands
 
 ```
-sbrepo ls --endpoint s3://<bucket> github.com/yuuki/droot
-sbrepo push --endpoint s3://<bucket> github.com/yuuki/droot ./droot
-sbrepo pull --endpoint s3://<bucket> github.com/yuuki/droot /usr/local/bin
-sbrepo sync --endpoint s3://<bucket> /usr/local/bin
+binrep ls --endpoint s3://<bucket> github.com/yuuki/droot
+binrep push --endpoint s3://<bucket> github.com/yuuki/droot ./droot
+binrep pull --endpoint s3://<bucket> github.com/yuuki/droot /usr/local/bin
+binrep sync --endpoint s3://<bucket> /usr/local/bin
 ```
 
 # Directory layout on S3 bucket
@@ -36,7 +36,7 @@ s3://<bucket>/<host>/<user>/<project>/<date>/
 The example below.
 
 ```
-s3://sbrepo-repository/
+s3://binrep-repository/
 |-- github.com/
     -- yuuki/
         -- droot/

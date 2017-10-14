@@ -1,7 +1,7 @@
 package main
 
 // Name is application name
-const Name = "sbrepo"
+const Name = "binrep"
 
 // Version is application version
 const Version string = "0.1.0"
