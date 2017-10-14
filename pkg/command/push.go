@@ -24,28 +24,22 @@ func Push(param *PushParam, name string, binPath string) error {
 		return errors.Wrapf(err, "failed to open %v", binPath)
 	}
 
-	sess := session.New(aws.NewConfig().WithLogLevel(aws.LogDebugWithRequestRetries | aws.LogDebugWithRequestErrors))
+	sess := session.New(aws.NewConfig())
 	s3Client := s3.New(sess)
 
-	timestamp := now()
-	url, err := s3.BuildURL(param.Endpoint, name, timestamp)
-	if err != nil {
-		return errors.Wrap(err, "failed to parse url")
-	}
 	var binName string
 	if param.BinName == "" {
 		binName = filepath.Base(file.Name())
 	}
-	sum, err := checksum(file)
+	bin, err := meta.BuildBinary(file, binName)
 	if err != nil {
 		return err
 	}
-	err = s3Client.CreateOrUpdateMeta(url, &meta.Binary{
-		Name:      binName,
-		Checksum:  sum,
-		Timestamp: timestamp,
-	})
+	url, err := s3.BuildURL(param.Endpoint, bin.Name, bin.Timestamp)
 	if err != nil {
+		return err
+	}
+	if err = s3Client.CreateOrUpdateMeta(url, bin); err != nil {
 		return err
 	}
 
