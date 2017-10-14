@@ -20,7 +20,6 @@ type Binary struct {
 
 type Meta struct {
 	Binaries []*Binary `yaml:"binaries"`
-	Data     []byte
 }
 
 func New(bins []*Binary) *Meta {
