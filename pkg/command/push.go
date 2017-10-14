@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
+	"github.com/yuuki/sbrepo/pkg/meta"
 	"github.com/yuuki/sbrepo/pkg/s3"
 )
 
@@ -22,19 +24,34 @@ func Push(param *PushParam, name string, binPath string) error {
 		return errors.Wrapf(err, "failed to open %v", binPath)
 	}
 
-	sess := session.New()
+	sess := session.New(aws.NewConfig().WithLogLevel(aws.LogDebugWithRequestRetries | aws.LogDebugWithRequestErrors))
 	s3Client := s3.New(sess)
-	log.Println("-->", "Uploading", binPath, "to", param.Endpoint)
 
-	var binName string
-	if param.BinName == "" {
-		binName = filepath.Base(binPath)
-	}
-	url, err := s3.BuildURL(param.Endpoint, name, now(), binName)
+	timestamp := now()
+	url, err := s3.BuildURL(param.Endpoint, name, timestamp)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse url")
 	}
-	location, err := s3Client.PushBinary(file, url)
+	var binName string
+	if param.BinName == "" {
+		binName = filepath.Base(file.Name())
+	}
+	sum, err := checksum(file)
+	if err != nil {
+		return err
+	}
+	err = s3Client.CreateOrUpdateMeta(url, &meta.Binary{
+		Name:      binName,
+		Checksum:  sum,
+		Timestamp: timestamp,
+	})
+	if err != nil {
+		return err
+	}
+
+	log.Println("-->", "Uploading", binPath, "to", param.Endpoint)
+
+	location, err := s3Client.PushBinary(file, url, binName)
 	if err != nil {
 		return err
 	}
