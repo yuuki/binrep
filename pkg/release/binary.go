@@ -46,3 +46,7 @@ func (b *Binary) ValidateChecksum(r io.Reader) error {
 	}
 	return nil
 }
+
+func (b *Binary) Inspect(w io.Writer) {
+	fmt.Fprintf(w, "%s\t%s\t%s\t", b.Name, b.Version, b.Checksum)
+}

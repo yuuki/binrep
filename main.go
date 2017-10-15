@@ -33,6 +33,8 @@ func (cli *CLI) Run(args []string) int {
 	var err error
 
 	switch args[1] {
+	case "show":
+		err = cli.doShow(args[2:])
 	case "push":
 		err = cli.doPush(args[2:])
 	case "pull":
@@ -63,6 +65,7 @@ Usage: binrep [options]
   static binary repository.
 
 Commands:
+  show          show binary information.
   push		push binary.
   pull		pull binary.
   sync          sync remote repository to local directory.
@@ -79,6 +82,37 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 		fmt.Fprint(cli.errStream, help)
 	}
 	return flags
+}
+
+var showHelpText = `
+Usage: binrep show [options] <host>/<user>/<project>
+
+show binary information.
+
+Options:
+  --endpoint, -e	s3 uri
+  --timestamp, -t       binary timestamp
+`
+
+func (cli *CLI) doShow(args []string) error {
+	var param command.ShowParam
+	flags := cli.prepareFlags(showHelpText)
+	flags.StringVar(&param.Timestamp, "t", "", "")
+	flags.StringVar(&param.Timestamp, "timestamp", "", "")
+	flags.StringVar(&param.Endpoint, "e", "", "")
+	flags.StringVar(&param.Endpoint, "endpoint", "", "")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if param.Endpoint == "" {
+		fmt.Fprint(cli.errStream, pushHelpText)
+		return errors.Errorf("--endpoint required")
+	}
+	if len(flags.Args()) < 1 {
+		fmt.Fprint(cli.errStream, pushHelpText)
+		return errors.Errorf("too few arguments")
+	}
+	return command.Show(&param, flags.Arg(0))
 }
 
 var pushHelpText = `

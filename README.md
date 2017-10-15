@@ -19,7 +19,7 @@ The deployment of (internel) tools written by Go takes a lot more works, especia
 ## Commands
 
 ```
-binrep ls --endpoint s3://<bucket> github.com/yuuki/droot
+binrep show --endpoint s3://<bucket> github.com/yuuki/droot
 binrep push --endpoint s3://<bucket> github.com/yuuki/droot ./droot
 binrep pull --endpoint s3://<bucket> github.com/yuuki/droot /usr/local/bin
 binrep sync --endpoint s3://<bucket> /usr/local/bin

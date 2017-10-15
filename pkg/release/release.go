@@ -1,6 +1,8 @@
 package release
 
 import (
+	"fmt"
+	"io"
 	"net/url"
 	"path/filepath"
 	"time"
@@ -16,6 +18,24 @@ type Release struct {
 
 func New(meta *Meta, u *url.URL) *Release {
 	return &Release{Meta: meta, URL: u}
+}
+
+func (rel *Release) Timestamp() string {
+	return filepath.Base(rel.URL.Path)
+}
+
+// Inspect inspetcs the release information.
+func (rel *Release) Inspect(w io.Writer) {
+	fmt.Fprintf(w, "URL\tTIMESTAMP\t")
+	for i := 1; i <= len(rel.Meta.Binaries); i++ {
+		fmt.Fprintf(w, "BINNAME%d\tBINVERSION%d\tBINCHECKSUM%d\t", i, i, i)
+	}
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "%s\t%s\t", rel.URL, rel.Timestamp())
+	for _, b := range rel.Meta.Binaries {
+		b.Inspect(w)
+	}
+	fmt.Fprintln(w)
 }
 
 func Now() string {
