@@ -15,3 +15,15 @@ test: vet
 .PHONY: vet
 vet:
 	go vet $(PKGS)
+
+.PHONY: patch
+patch:
+	script/bump_version.sh patch
+
+.PHONY: minor
+minor:
+	script/bump_version.sh minor
+
+.PHONY: release
+release:
+	goreleaser --rm-dist
