@@ -66,6 +66,25 @@ s3://binrep-repository/
 
 - `release`: `<host>/<user>/<project>/<date>/`
 
+# How to release
+
+binrep uses the following tools for the binary release.
+
+- [goreleaser](https://goreleaser.com/)
+- [gobump](https://github.com/motemen/gobump)
+
+The case of releasing patch version.
+
+```sh
+make patch release
+```
+
+The case of releasing minor version.
+
+```sh
+make minor release
+```
+
 # License
 
 [The MIT License](./LICENSE).
