@@ -16,6 +16,10 @@ test: vet
 vet:
 	go vet $(PKGS)
 
+.PHONY: lint
+lint:
+	golint $(PKGS)
+
 .PHONY: patch
 patch:
 	script/bump_version.sh patch
