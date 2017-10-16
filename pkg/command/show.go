@@ -5,6 +5,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/yuuki/binrep/pkg/release"
 	"github.com/yuuki/binrep/pkg/storage"
 )
 
@@ -19,9 +20,20 @@ func Show(param *ShowParam, name string) error {
 	sess := session.New()
 	st := storage.New(sess)
 
-	rel, err := st.FindLatestRelease(param.Endpoint, name)
-	if err != nil {
-		return err
+	var (
+		rel *release.Release
+		err error
+	)
+	if param.Timestamp == "" {
+		rel, err = st.FindLatestRelease(param.Endpoint, name)
+		if err != nil {
+			return err
+		}
+	} else {
+		rel, err = st.FindReleaseByTimestamp(param.Endpoint, name, param.Timestamp)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Format in tab-separated columns with a tab stop of 8.

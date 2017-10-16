@@ -25,6 +25,7 @@ import (
 // S3 defines the interface of the storage backend layer for S3.
 type S3 interface {
 	FindLatestRelease(endpoint, name string) (*release.Release, error)
+	FindReleaseByTimestamp(endpoint, name, timestamp string) (*release.Release, error)
 	CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error)
 	PushRelease(rel *release.Release) error
 	PullRelease(rel *release.Release, installDir string) error
@@ -52,6 +53,22 @@ func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error)
 		return nil, err
 	}
 	u, err := release.BuildURL(endpoint, name, latest)
+	if err != nil {
+		return nil, err
+	}
+	meta, err := s.FindMeta(u)
+	if err != nil {
+		return nil, err
+	}
+	if meta == nil {
+		return nil, errors.Errorf("meta.yml not found %s", u)
+	}
+	return release.New(meta, u), nil
+}
+
+// FindReleaseByTimestamp finds the release including the `timestamp`.
+func (s *_s3) FindReleaseByTimestamp(endpoint, name, timestamp string) (*release.Release, error) {
+	u, err := release.BuildURL(endpoint, name, timestamp)
 	if err != nil {
 		return nil, err
 	}
