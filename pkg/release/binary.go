@@ -9,6 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	shortCheckSumLen int = 7
+)
+
 // Binary represents the binary file within release.
 type Binary struct {
 	Name     string    `yaml:"name"`
@@ -52,7 +56,11 @@ func (b *Binary) ValidateChecksum(r io.Reader) error {
 	return nil
 }
 
+func (b *Binary) shortChecksum() string {
+	return b.Checksum[0:shortCheckSumLen]
+}
+
 // Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
-	fmt.Fprintf(w, "%s\t%s\t%s\t", b.Name, b.Version, b.Checksum)
+	fmt.Fprintf(w, "%s\t%s\t%s\t", b.Name, b.Version, b.shortChecksum())
 }
