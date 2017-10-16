@@ -1,5 +1,10 @@
 package release
 
+const (
+	// MetaFileName is the name of metadata file.
+	MetaFileName = "meta.yml"
+)
+
 // Meta represents metadata of a release.
 type Meta struct {
 	Binaries []*Binary `yaml:"binaries"`

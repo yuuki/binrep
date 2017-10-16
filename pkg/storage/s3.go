@@ -22,11 +22,6 @@ import (
 	"github.com/yuuki/binrep/pkg/release"
 )
 
-const (
-	// META_FILE_NAME is the name of metadata file.
-	META_FILE_NAME = "meta.yml"
-)
-
 // S3 defines the interface of the storage backend layer for S3.
 type S3 interface {
 	FindLatestRelease(endpoint, name string) (*release.Release, error)
@@ -117,7 +112,7 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, err
 	}
 	_, err = s.svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(u.Host),
-		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
+		Key:    aws.String(filepath.Join(u.Path, release.MetaFileName)),
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
 	})
 	if err != nil {
@@ -130,7 +125,7 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, err
 func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
-		Key:    aws.String(filepath.Join(u.Path, META_FILE_NAME)),
+		Key:    aws.String(filepath.Join(u.Path, release.MetaFileName)),
 	})
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
