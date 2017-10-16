@@ -36,7 +36,7 @@ func (rel *Release) Timestamp() string {
 func (rel *Release) Inspect(w io.Writer) {
 	fmt.Fprintf(w, "NAME\tTIMESTAMP\t")
 	for i := 1; i <= len(rel.Meta.Binaries); i++ {
-		fmt.Fprintf(w, "BINNAME%d\tBINVERSION%d\tBINCHECKSUM%d\t", i, i, i)
+		fmt.Fprintf(w, "BINNARY%d\t", i)
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "%s\t%s\t", rel.Name(), rel.Timestamp())
