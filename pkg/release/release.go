@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	strftime "github.com/jehiah/go-strftime"
@@ -21,6 +22,11 @@ func New(meta *Meta, u *url.URL) *Release {
 	return &Release{Meta: meta, URL: u}
 }
 
+// Name returns the `<host>/<user>/<project>`.
+func (rel *Release) Name() string {
+	return strings.TrimPrefix(filepath.Dir(rel.URL.Path), "/")
+}
+
 // Timestamp returns the timestamp.
 func (rel *Release) Timestamp() string {
 	return filepath.Base(rel.URL.Path)
@@ -28,12 +34,12 @@ func (rel *Release) Timestamp() string {
 
 // Inspect inspetcs the release information.
 func (rel *Release) Inspect(w io.Writer) {
-	fmt.Fprintf(w, "URL\tTIMESTAMP\t")
+	fmt.Fprintf(w, "NAME\tTIMESTAMP\t")
 	for i := 1; i <= len(rel.Meta.Binaries); i++ {
 		fmt.Fprintf(w, "BINNAME%d\tBINVERSION%d\tBINCHECKSUM%d\t", i, i, i)
 	}
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "%s\t%s\t", rel.URL, rel.Timestamp())
+	fmt.Fprintf(w, "%s\t%s\t", rel.Name(), rel.Timestamp())
 	for _, b := range rel.Meta.Binaries {
 		b.Inspect(w)
 	}
