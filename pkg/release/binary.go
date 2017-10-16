@@ -1,7 +1,7 @@
 package release
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -40,7 +40,7 @@ func checksum(r io.Reader) (string, error) {
 	if err != nil {
 		errors.Errorf("failed to read data for checksum")
 	}
-	return fmt.Sprintf("%x", sha1.Sum(body)), nil
+	return fmt.Sprintf("%x", sha256.Sum256(body)), nil
 }
 
 // ValidateChecksum validates the correctness of the checksum. Return
