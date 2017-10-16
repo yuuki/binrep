@@ -36,14 +36,14 @@ func Push(param *PushParam, name string, binPaths []string) error {
 	}
 
 	sess := session.New(aws.NewConfig())
-	st := storage.New(sess)
+	st := storage.New(sess, param.Endpoint)
 
-	rel, err := st.CreateRelease(param.Endpoint, name, bins)
+	rel, err := st.CreateRelease(name, bins)
 	if err != nil {
 		return err
 	}
 
-	log.Println("-->", "Uploading", binPaths, "to", param.Endpoint)
+	log.Println("-->", "Uploading", binPaths, "to", rel.URL)
 
 	if err := st.PushRelease(rel); err != nil {
 		return err

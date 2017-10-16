@@ -18,19 +18,19 @@ type ShowParam struct {
 // Show shows the latest release of the name(<host>/<user>/<project>).
 func Show(param *ShowParam, name string) error {
 	sess := session.New()
-	st := storage.New(sess)
+	st := storage.New(sess, param.Endpoint)
 
 	var (
 		rel *release.Release
 		err error
 	)
 	if param.Timestamp == "" {
-		rel, err = st.FindLatestRelease(param.Endpoint, name)
+		rel, err = st.FindLatestRelease(name)
 		if err != nil {
 			return err
 		}
 	} else {
-		rel, err = st.FindReleaseByTimestamp(param.Endpoint, name, param.Timestamp)
+		rel, err = st.FindReleaseByTimestamp(name, param.Timestamp)
 		if err != nil {
 			return err
 		}

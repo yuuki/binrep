@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -24,35 +25,47 @@ import (
 
 // S3 defines the interface of the storage backend layer for S3.
 type S3 interface {
-	FindLatestRelease(endpoint, name string) (*release.Release, error)
-	FindReleaseByTimestamp(endpoint, name, timestamp string) (*release.Release, error)
-	CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error)
+	FindLatestRelease(name string) (*release.Release, error)
+	FindReleaseByTimestamp(name, timestamp string) (*release.Release, error)
+	CreateRelease(name string, bins []*release.Binary) (*release.Release, error)
 	PushRelease(rel *release.Release) error
 	PullRelease(rel *release.Release, installDir string) error
 }
 
 type _s3 struct {
+	bucket     string
 	svc        s3iface.S3API
 	uploader   s3manageriface.UploaderAPI
 	downloader s3manageriface.DownloaderAPI
 }
 
 // New creates a S3 client object.
-func New(sess *session.Session) S3 {
+func New(sess *session.Session, bucket string) S3 {
 	return &_s3{
+		bucket:     strings.TrimPrefix(bucket, "s3://"),
 		svc:        s3.New(sess),
 		uploader:   s3manager.NewUploader(sess),
 		downloader: s3manager.NewDownloader(sess),
 	}
 }
 
+// BuildReleaseURL builds the binary file url for S3.
+func (s *_s3) buildReleaseURL(name, timestamp string) (*url.URL, error) {
+	urlStr := fmt.Sprintf("s3://%s/%s", s.bucket, filepath.Join(name, timestamp))
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse %v", urlStr)
+	}
+	return u, nil
+}
+
 // FindLatestRelease finds the release including the latest timestamp.
-func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error) {
-	latest, err := s.latestTimestamp(endpoint, name)
+func (s *_s3) FindLatestRelease(name string) (*release.Release, error) {
+	latest, err := s.latestTimestamp(name)
 	if err != nil {
 		return nil, err
 	}
-	u, err := release.BuildURL(endpoint, name, latest)
+	u, err := s.buildReleaseURL(name, latest)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +80,8 @@ func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error)
 }
 
 // FindReleaseByTimestamp finds the release including the `timestamp`.
-func (s *_s3) FindReleaseByTimestamp(endpoint, name, timestamp string) (*release.Release, error) {
-	u, err := release.BuildURL(endpoint, name, timestamp)
+func (s *_s3) FindReleaseByTimestamp(name, timestamp string) (*release.Release, error) {
+	u, err := s.buildReleaseURL(name, timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +96,8 @@ func (s *_s3) FindReleaseByTimestamp(endpoint, name, timestamp string) (*release
 }
 
 // CreateRelease creates the release on S3.
-func (s *_s3) CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error) {
-	u, err := release.BuildURL(endpoint, name, release.Now())
+func (s *_s3) CreateRelease(name string, bins []*release.Binary) (*release.Release, error) {
+	u, err := s.buildReleaseURL(name, release.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -96,18 +109,14 @@ func (s *_s3) CreateRelease(endpoint, name string, bins []*release.Binary) (*rel
 }
 
 // latestTimestamp gets the latest timestamp.
-func (s *_s3) latestTimestamp(urlStr string, name string) (string, error) {
-	u, err := url.Parse(urlStr + "/" + name)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse %v", urlStr)
-	}
+func (s *_s3) latestTimestamp(name string) (string, error) {
 	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket:    aws.String(u.Host),
-		Prefix:    aws.String(strings.TrimLeft(u.Path, "/") + "/"),
+		Bucket:    aws.String(s.bucket),
+		Prefix:    aws.String(name + "/"),
 		Delimiter: aws.String("/"),
 	})
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to list objects (bucket: %v, path: %v/)", u.Host, u.Path)
+		return "", errors.Wrapf(err, "failed to list objects (bucket: %v, path: %v/)", s.bucket, name)
 	}
 	if len(resp.CommonPrefixes) < 1 {
 		return "", errors.Errorf("no such projects %v", name)
@@ -128,7 +137,7 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, err
 		return nil, errors.Wrap(err, "failed to marshal yaml")
 	}
 	_, err = s.svc.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(u.Host),
+		Bucket: aws.String(s.bucket),
 		Key:    aws.String(filepath.Join(u.Path, release.MetaFileName)),
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
 	})
@@ -141,7 +150,7 @@ func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, err
 // FindMeta finds metadata from S3, and returns nil if meta.yml is not found.
 func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(u.Host),
+		Bucket: aws.String(s.bucket),
 		Key:    aws.String(filepath.Join(u.Path, release.MetaFileName)),
 	})
 	if err != nil {
@@ -169,7 +178,7 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 func (s *_s3) PushRelease(rel *release.Release) error {
 	for _, bin := range rel.Meta.Binaries {
 		_, err := s.uploader.Upload(&s3manager.UploadInput{
-			Bucket: aws.String(rel.URL.Host),
+			Bucket: aws.String(s.bucket),
 			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
 			Body:   bin.Body,
 		})
@@ -190,7 +199,7 @@ func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 		}
 
 		_, err = s.downloader.Download(file, &s3.GetObjectInput{
-			Bucket: aws.String(rel.URL.Host),
+			Bucket: aws.String(s.bucket),
 			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
 		})
 		if err != nil {

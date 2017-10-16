@@ -17,14 +17,14 @@ type PullParam struct {
 // Pull pulls the latest release of the name(<host>/<user>/<project>) to installPath.
 func Pull(param *PullParam, name, installPath string) error {
 	sess := session.New()
-	st := storage.New(sess)
+	st := storage.New(sess, param.Endpoint)
 
-	rel, err := st.FindLatestRelease(param.Endpoint, name)
+	rel, err := st.FindLatestRelease(name)
 	if err != nil {
 		return err
 	}
 
-	log.Println("-->", "Downloading", param.Endpoint, "to", installPath)
+	log.Println("-->", "Downloading", rel.URL, "to", installPath)
 
 	if err := st.PullRelease(rel, installPath); err != nil {
 		return err

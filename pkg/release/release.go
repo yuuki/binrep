@@ -8,7 +8,6 @@ import (
 	"time"
 
 	strftime "github.com/jehiah/go-strftime"
-	"github.com/pkg/errors"
 )
 
 // Release represents a `<host>/<user>/<project>/<timestamp>/` layout.
@@ -47,14 +46,4 @@ func Now() string {
 	utc, _ := time.LoadLocation("UTC")
 	t = t.In(utc)
 	return strftime.Format("%Y%m%d%H%M%S", t)
-}
-
-// BuildURL builds the binary file url for S3.
-func BuildURL(urlStr string, name, timestamp string) (*url.URL, error) {
-	//TODO: validate version
-	u, err := url.Parse(urlStr + "/" + filepath.Join(name, timestamp))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse %v", urlStr)
-	}
-	return u, nil
 }
