@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Binary represents the binary file within release.
 type Binary struct {
 	Name     string    `yaml:"name"`
 	Checksum string    `yaml:"checksum"`
@@ -16,6 +17,8 @@ type Binary struct {
 	Body     io.Reader `yaml:"-"`
 }
 
+// BuildBinary builds a Binary object. Return error if it is failed
+// to calculate checksum of the body.
 func BuildBinary(name string, body io.Reader) (*Binary, error) {
 	sum, err := checksum(body)
 	if err != nil {
@@ -36,6 +39,8 @@ func checksum(r io.Reader) (string, error) {
 	return fmt.Sprintf("%x", sha1.Sum(body)), nil
 }
 
+// ValidateChecksum validates the correctness of the checksum. Return
+// error If the both of checksum is not the same.
 func (b *Binary) ValidateChecksum(r io.Reader) error {
 	sum, err := checksum(r)
 	if err != nil {
@@ -47,6 +52,7 @@ func (b *Binary) ValidateChecksum(r io.Reader) error {
 	return nil
 }
 
+// Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
 	fmt.Fprintf(w, "%s\t%s\t%s\t", b.Name, b.Version, b.Checksum)
 }

@@ -23,9 +23,11 @@ import (
 )
 
 const (
+	// META_FILE_NAME is the name of metadata file.
 	META_FILE_NAME = "meta.yml"
 )
 
+// S3 defines the interface of the storage backend layer for S3.
 type S3 interface {
 	FindLatestRelease(endpoint, name string) (*release.Release, error)
 	CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error)
@@ -48,6 +50,7 @@ func New(sess *session.Session) S3 {
 	}
 }
 
+// FindLatestRelease finds the release including the latest timestamp.
 func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error) {
 	latest, err := s.latestTimestamp(endpoint, name)
 	if err != nil {
@@ -67,6 +70,7 @@ func (s *_s3) FindLatestRelease(endpoint, name string) (*release.Release, error)
 	return release.New(meta, u), nil
 }
 
+// CreateRelease creates the release on S3.
 func (s *_s3) CreateRelease(endpoint, name string, bins []*release.Binary) (*release.Release, error) {
 	u, err := release.BuildURL(endpoint, name, release.Now())
 	if err != nil {
@@ -104,6 +108,7 @@ func (s *_s3) latestTimestamp(urlStr string, name string) (string, error) {
 	return timestamps[len(timestamps)-1], nil
 }
 
+// CreateMeta creates the meta.yml on S3.
 func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
 	m := release.NewMeta(bins)
 	data, err := yaml.Marshal(m)
@@ -163,6 +168,7 @@ func (s *_s3) PushRelease(rel *release.Release) error {
 	return nil
 }
 
+// PullRelease pulls the binary files within the release on S3 to installDir.
 func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 	for _, bin := range rel.Meta.Binaries {
 		path := filepath.Join(installDir, bin.Name)

@@ -28,7 +28,7 @@ binrep sync --endpoint s3://<bucket> /usr/local/bin
 # Directory layout on S3 bucket
 
 ```
-s3://<bucket>/<host>/<user>/<project>/<date>/
+s3://<bucket>/<host>/<user>/<project>/<timestamp>/
                                          -- <bin>
                                          -- meta.yml
 ```
@@ -64,7 +64,7 @@ s3://binrep-repository/
 
 # Terms
 
-- `release`: `<host>/<user>/<project>/<date>/`
+- `release`: `<host>/<user>/<project>/<timestamp>/`
 
 # How to release
 

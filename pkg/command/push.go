@@ -12,11 +12,13 @@ import (
 	"github.com/yuuki/binrep/pkg/storage"
 )
 
+// PushParam represents the option parameter of `push`.
 type PushParam struct {
 	Timestamp string
 	Endpoint  string
 }
 
+// Push pushes the binary files of binPaths as release of the name(<host>/<user>/<project>).
 func Push(param *PushParam, name string, binPaths []string) error {
 	// TODO: Validate the same file name
 	bins := make([]*release.Binary, 0, len(binPaths))

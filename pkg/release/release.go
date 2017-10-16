@@ -11,15 +11,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Release represents a `<host>/<user>/<project>/<timestamp>/` layout.
 type Release struct {
 	Meta *Meta
 	URL  *url.URL
 }
 
+// New returns a Release object.
 func New(meta *Meta, u *url.URL) *Release {
 	return &Release{Meta: meta, URL: u}
 }
 
+// Timestamp returns the timestamp.
 func (rel *Release) Timestamp() string {
 	return filepath.Base(rel.URL.Path)
 }
@@ -38,6 +41,7 @@ func (rel *Release) Inspect(w io.Writer) {
 	fmt.Fprintln(w)
 }
 
+// Now returns the current UTC timestamp.
 func Now() string {
 	t := time.Now()
 	utc, _ := time.LoadLocation("UTC")

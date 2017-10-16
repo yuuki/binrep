@@ -8,11 +8,13 @@ import (
 	"github.com/yuuki/binrep/pkg/storage"
 )
 
+// ShowParam represents the option parameter of `show`.
 type ShowParam struct {
 	Timestamp string
 	Endpoint  string
 }
 
+// Show shows the latest release of the name(<host>/<user>/<project>).
 func Show(param *ShowParam, name string) error {
 	sess := session.New()
 	st := storage.New(sess)
