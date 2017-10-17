@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+
 	"github.com/yuuki/binrep/pkg/storage"
 )
 

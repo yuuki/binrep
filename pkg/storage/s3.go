@@ -11,8 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,6 +19,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/yuuki/binrep/pkg/release"
 )
 

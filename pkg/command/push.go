@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
+
 	"github.com/yuuki/binrep/pkg/release"
 	"github.com/yuuki/binrep/pkg/storage"
 )
