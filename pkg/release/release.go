@@ -32,6 +32,11 @@ func (rel *Release) Timestamp() string {
 	return filepath.Base(rel.URL.Path)
 }
 
+// Prefix returns the `<host>/<user>/<project>/<timestamp>/`.
+func (rel *Release) Prefix() string {
+	return strings.Join([]string{rel.Name(), rel.Timestamp()}, "/")
+}
+
 // Inspect inspetcs the release information.
 func (rel *Release) Inspect(w io.Writer) {
 	fmt.Fprintf(w, "NAME\tTIMESTAMP\t")

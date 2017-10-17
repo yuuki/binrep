@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	"github.com/yuuki/binrep/pkg/release"
@@ -15,6 +15,7 @@ import (
 // PushParam represents the option parameter of `push`.
 type PushParam struct {
 	Timestamp string
+	Keep      int
 	Endpoint  string
 }
 
@@ -35,7 +36,7 @@ func Push(param *PushParam, name string, binPaths []string) error {
 		bins = append(bins, bin)
 	}
 
-	sess := session.New(aws.NewConfig())
+	sess := session.New()
 	st := storage.New(sess, param.Endpoint)
 
 	rel, err := st.CreateRelease(name, bins)
@@ -50,6 +51,15 @@ func Push(param *PushParam, name string, binPaths []string) error {
 	}
 
 	log.Println("Uploaded", "to", rel.URL)
+
+	log.Println("--> Cleaning up the old releases")
+
+	timestamps, err := st.PruneReleases(name, param.Keep)
+	if err != nil {
+		return err
+	}
+
+	log.Println("Cleaned", "up", strings.Join(timestamps, ","))
 
 	return nil
 }

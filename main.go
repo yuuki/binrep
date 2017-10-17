@@ -11,6 +11,10 @@ import (
 	"github.com/yuuki/binrep/pkg/command"
 )
 
+const (
+	defaultKeep int = 5
+)
+
 // CLI is the command line object.
 type CLI struct {
 	// outStream and errStream are the stdout and stderr
@@ -123,6 +127,7 @@ push binary.
 Options:
   --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
+  --keep, -k		the number of releases that it keeps (default: 5)
 `
 
 func (cli *CLI) doPush(args []string) error {
@@ -130,6 +135,8 @@ func (cli *CLI) doPush(args []string) error {
 	flags := cli.prepareFlags(pushHelpText)
 	flags.StringVar(&param.Timestamp, "t", "", "")
 	flags.StringVar(&param.Timestamp, "timestamp", "", "")
+	flags.IntVar(&param.Keep, "k", defaultKeep, "")
+	flags.IntVar(&param.Keep, "keep", defaultKeep, "")
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -30,6 +31,8 @@ type S3 interface {
 	CreateRelease(name string, bins []*release.Binary) (*release.Release, error)
 	PushRelease(rel *release.Release) error
 	PullRelease(rel *release.Release, installDir string) error
+	DeleteRelease(name, timestamp string) error
+	PruneReleases(name string, keep int) ([]string, error)
 }
 
 type _s3 struct {
@@ -212,4 +215,73 @@ func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 		}
 	}
 	return nil
+}
+
+func (s *_s3) ascTimestamps(name string) ([]string, error) {
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket:    aws.String(s.bucket),
+		Prefix:    aws.String(name + "/"),
+		Delimiter: aws.String("/"),
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list objects (bucket: %v, path: %v/)", s.bucket, name)
+	}
+	if len(resp.CommonPrefixes) < 1 {
+		return nil, errors.Errorf("no such projects %v", name)
+	}
+	timestamps := make([]string, 0, len(resp.CommonPrefixes))
+	for _, cp := range resp.CommonPrefixes {
+		timestamps = append(timestamps, filepath.Base(*cp.Prefix))
+	}
+	sort.Strings(timestamps)
+	return timestamps, nil
+}
+
+// DeleteRelease deletes the release with the `timestamp`.
+func (s *_s3) DeleteRelease(name, timestamp string) error {
+	rel, err := s.FindReleaseByTimestamp(name, timestamp)
+	if err != nil {
+		return err
+	}
+	// recursively delete
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(rel.Prefix()),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to list objects (bucket: %v, key: %v/)", s.bucket, rel.URL.Path)
+	}
+	if *resp.IsTruncated {
+		//TODO: paging
+		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, rel.URL.Path)
+	}
+	for _, obj := range resp.Contents {
+		_, err := s.svc.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    obj.Key,
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to delete object (bucket: %v, key: %v)", s.bucket, obj.Key)
+		}
+	}
+	return nil
+}
+
+// PruneReleases prunes the `keep` of old releases.
+func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
+	timestamps, err := s.ascTimestamps(name)
+	if err != nil {
+		return nil, err
+	}
+	var prunedTimestamps []string
+	if len(timestamps) > keep {
+		n := len(timestamps) - keep
+		prunedTimestamps = timestamps[0:n]
+		for _, t := range prunedTimestamps {
+			if err := s.DeleteRelease(name, t); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return prunedTimestamps, nil
 }
