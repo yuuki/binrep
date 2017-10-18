@@ -15,9 +15,9 @@ import (
 
 // PushParam represents the option parameter of `push`.
 type PushParam struct {
-	Timestamp string
-	Keep      int
-	Endpoint  string
+	Timestamp    string
+	KeepReleases int
+	Endpoint     string
 }
 
 // Push pushes the binary files of binPaths as release of the name(<host>/<user>/<project>).
@@ -55,7 +55,7 @@ func Push(param *PushParam, name string, binPaths []string) error {
 
 	log.Println("--> Cleaning up the old releases")
 
-	timestamps, err := st.PruneReleases(name, param.Keep)
+	timestamps, err := st.PruneReleases(name, param.KeepReleases)
 	if err != nil {
 		return err
 	}
