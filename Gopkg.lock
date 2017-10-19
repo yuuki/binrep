@@ -8,6 +8,12 @@
   version = "v1.12.9"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  revision = "77ed807830b4df581417e7f89eb81d4872832b72"
+
+[[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
   revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
@@ -45,6 +51,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6539600cccd15eed6db04e8f9f92a8a4f9405259b77c44ea4356dab422fa38bc"
+  inputs-digest = "679dedcdcd7cf4ebe408d69c2f7e7b66749c394a2b8802afb819c79a18c23e57"
   solver-name = "gps-cdcl"
   solver-version = 1

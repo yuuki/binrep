@@ -18,3 +18,6 @@
 - github.com/ivpusic/grpool
   - Copyright (c) 2017 Ivan Pusic
   - [MIT LICENSE](https://github.com/ivpusic/grpool/blob/master/LICENSE)
+- github.com/dustin/go-humanize
+  - Copyright (c) 2005-2008  Dustin Sallings <dustin@spy.net>
+  - [MIT LICENSE](https://github.com/dustin/go-humanize/blob/master/LICENSE)
