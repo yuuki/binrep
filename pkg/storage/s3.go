@@ -325,16 +325,24 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 		//TODO: paging
 		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
 	}
+
+	var foundErr error // just use nonzeo exit
 	for _, obj := range resp.Contents {
 		if ok, name := release.ParseName(*obj.Key); ok {
-			if err := walkfn(name); err != nil {
-				return err
-			}
-			return nil
+			go func(name string) {
+				if err := walkfn(name); err != nil {
+					log.Printf("failed to walk %s: %s\n", name, err)
+					// just put error log, not to exit
+					foundErr = err
+				}
+			}(name)
 		}
 		if err := s.walkNames(filepath.Join(prefix, *obj.Key), walkfn); err != nil {
 			return err
 		}
+	}
+	if foundErr != nil {
+		return foundErr
 	}
 	return nil
 }
