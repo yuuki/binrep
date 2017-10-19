@@ -194,6 +194,7 @@ pull binary.
 Options:
   --endpoint, -e	s3 uri
   --concurrency, -c     number of multiple release fetchers to make at a time
+  --max-bandwidth, -bw	max bandwidth for download binaries (Bytes/sec) eg. '1 MB', '1024 KB'
 `
 
 func (cli *CLI) doSync(args []string) error {
@@ -203,6 +204,8 @@ func (cli *CLI) doSync(args []string) error {
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	flags.IntVar(&param.Concurrency, "c", defaultSyncConcurrency, "")
 	flags.IntVar(&param.Concurrency, "concurrency", defaultSyncConcurrency, "")
+	flags.StringVar(&param.MaxBandWidth, "bw", "", "")
+	flags.StringVar(&param.MaxBandWidth, "max-bandwidth", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
