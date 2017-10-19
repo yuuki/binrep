@@ -193,7 +193,7 @@ pull binary.
 
 Options:
   --endpoint, -e	s3 uri
-  --cuncurrency, -c     number of multiple release fetchers to make at a time
+  --concurrency, -c     number of multiple release fetchers to make at a time
 `
 
 func (cli *CLI) doSync(args []string) error {
