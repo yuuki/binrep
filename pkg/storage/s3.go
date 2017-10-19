@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -326,21 +327,29 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
 	}
 
-	var foundErr error // just use nonzeo exit
+	var (
+		wg       sync.WaitGroup
+		foundErr error // just use nonzeo exit
+	)
 	for _, obj := range resp.Contents {
 		if ok, name := release.ParseName(*obj.Key); ok {
+			wg.Add(1)
 			go func(name string) {
+				defer wg.Done()
 				if err := walkfn(name); err != nil {
 					log.Printf("failed to walk %s: %s\n", name, err)
 					// just put error log, not to exit
 					foundErr = err
 				}
 			}(name)
+			continue
 		}
-		if err := s.walkNames(filepath.Join(prefix, *obj.Key), walkfn); err != nil {
+		nextPrefix := filepath.Join(prefix, *obj.Key)
+		if err := s.walkNames(nextPrefix, walkfn); err != nil {
 			return err
 		}
 	}
+	wg.Wait()
 	if foundErr != nil {
 		return foundErr
 	}
