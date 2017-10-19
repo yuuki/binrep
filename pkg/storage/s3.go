@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -314,37 +313,6 @@ func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
 	return prunedTimestamps, nil
 }
 
-const (
-	timestampFormat = "20060102150405"
-)
-
-func isTimestamp(str string) bool {
-	if _, err := time.Parse(timestampFormat, str); err != nil {
-		if _, ok := err.(*time.ParseError); ok {
-			return false
-		}
-		return false
-	}
-	return true
-}
-
-func parseName(str string) (bool, string) {
-	// str is expected to be 'github.com/yuuki/droot/20171017152508/droot'
-	// or 'github.com/yuuki/droot/20171017152508'
-	items := strings.Split(str, "/")
-	if len(items) < 2 {
-		return false, ""
-	}
-	tail, oneBeforeTail := items[len(items)-1], items[len(items)-2]
-	if isTimestamp(tail) {
-		return true, strings.Join(items[0:len(items)-1], "/")
-	}
-	if isTimestamp(oneBeforeTail) {
-		return true, strings.Join(items[0:len(items)-2], "/")
-	}
-	return false, ""
-}
-
 func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
@@ -358,7 +326,7 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
 	}
 	for _, obj := range resp.Contents {
-		if ok, name := parseName(*obj.Key); ok {
+		if ok, name := release.ParseName(*obj.Key); ok {
 			if err := walkfn(name); err != nil {
 				return err
 			}
