@@ -17,7 +17,8 @@ import (
 
 // SyncParam represents the option parameter of `show`.
 type SyncParam struct {
-	Endpoint string
+	Endpoint    string
+	Concurrency int
 }
 
 // Sync syncs the latest releases to rootDir.
@@ -25,7 +26,7 @@ func Sync(param *SyncParam, rootDir string) error {
 	sess := session.New()
 	st := storage.New(sess, param.Endpoint)
 
-	err := st.WalkLatestReleases(func(rel *release.Release) error {
+	err := st.WalkLatestReleases(param.Concurrency, func(rel *release.Release) error {
 		relPrefix := filepath.Join(rootDir, rel.Prefix())
 		// Skip download if the release already exists on the local filesystem.
 		if _, err := os.Stat(relPrefix); err == nil {

@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	defaultKeepReleases int = 5
+	defaultKeepReleases    int = 5
+	defaultSyncConcurrency int = 4
 )
 
 // CLI is the command line object.
@@ -192,6 +193,7 @@ pull binary.
 
 Options:
   --endpoint, -e	s3 uri
+  --cuncurrency, -c     number of multiple release fetchers to make at a time
 `
 
 func (cli *CLI) doSync(args []string) error {
@@ -199,6 +201,8 @@ func (cli *CLI) doSync(args []string) error {
 	flags := cli.prepareFlags(syncHelpText)
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
+	flags.IntVar(&param.Concurrency, "c", defaultSyncConcurrency, "")
+	flags.IntVar(&param.Concurrency, "concurrency", defaultSyncConcurrency, "")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}

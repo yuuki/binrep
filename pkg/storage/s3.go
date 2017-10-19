@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -20,10 +19,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/ivpusic/grpool"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/yuuki/binrep/pkg/release"
+)
+
+const (
+	jobQueueLen = 100
 )
 
 // S3 defines the interface of the storage backend layer for S3.
@@ -35,7 +39,7 @@ type S3 interface {
 	PullRelease(rel *release.Release, installDir string) error
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
-	WalkLatestReleases(releaseFn func(*release.Release) error) error
+	WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error
 }
 
 type _s3 struct {
@@ -314,7 +318,7 @@ func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
 	return prunedTimestamps, nil
 }
 
-func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
+func (s *_s3) walkNames(pool *grpool.Pool, prefix string, walkfn func(name string) error) error {
 	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
 		Prefix: aws.String(prefix),
@@ -327,29 +331,27 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
 	}
 
-	var (
-		wg       sync.WaitGroup
-		foundErr error // just use nonzeo exit
-	)
+	var foundErr error // just use nonzeo exit
 	for _, obj := range resp.Contents {
 		if ok, name := release.ParseName(*obj.Key); ok {
-			wg.Add(1)
-			go func(name string) {
-				defer wg.Done()
+			name := name
+			pool.WaitCount(1)
+			pool.JobQueue <- func() {
+				defer pool.JobDone()
 				if err := walkfn(name); err != nil {
 					log.Printf("failed to walk %s: %s\n", name, err)
 					// just put error log, not to exit
 					foundErr = err
 				}
-			}(name)
+			}
 			continue
 		}
 		nextPrefix := filepath.Join(prefix, *obj.Key)
-		if err := s.walkNames(nextPrefix, walkfn); err != nil {
+		if err := s.walkNames(pool, nextPrefix, walkfn); err != nil {
 			return err
 		}
 	}
-	wg.Wait()
+	pool.WaitAll()
 	if foundErr != nil {
 		return foundErr
 	}
@@ -357,8 +359,11 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 }
 
 // WalkLatestReleases walks the latest releases with the bucket.
-func (s *_s3) WalkLatestReleases(releaseFn func(*release.Release) error) error {
-	err := s.walkNames("", func(name string) error {
+func (s *_s3) WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error {
+	pool := grpool.NewPool(concurrency, jobQueueLen)
+	defer pool.Release()
+
+	err := s.walkNames(pool, "", func(name string) error {
 		rel, err := s.FindLatestRelease(name)
 		if err != nil {
 			return err
