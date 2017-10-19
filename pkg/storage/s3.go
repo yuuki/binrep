@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -33,6 +35,7 @@ type S3 interface {
 	PullRelease(rel *release.Release, installDir string) error
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
+	WalkLatestReleases(releaseFn func(*release.Release) error) error
 }
 
 type _s3 struct {
@@ -174,7 +177,32 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
+	for _, b := range m.Binaries {
+		b.Body, err = s.GetBinaryBody(u, b.Name)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &m, nil
+}
+
+func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
+	key := filepath.Join(relURL.Path, binName)
+	resp, err := s.svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return nil, errors.Wrapf(err, "not found %v", key)
+			default:
+			}
+		}
+		return nil, errors.Wrapf(err, "failed to get object from s3 %s", relURL)
+	}
+	return resp.Body, nil
 }
 
 // PushRelease pushes the release into S3.
@@ -284,4 +312,80 @@ func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
 		}
 	}
 	return prunedTimestamps, nil
+}
+
+const (
+	timestampFormat = "20060102150405"
+)
+
+func isTimestamp(str string) bool {
+	if _, err := time.Parse(timestampFormat, str); err != nil {
+		if _, ok := err.(*time.ParseError); ok {
+			return false
+		}
+		return false
+	}
+	return true
+}
+
+func parseName(str string) (bool, string) {
+	// str is expected to be 'github.com/yuuki/droot/20171017152508/droot'
+	// or 'github.com/yuuki/droot/20171017152508'
+	items := strings.Split(str, "/")
+	if len(items) < 2 {
+		return false, ""
+	}
+	tail, oneBeforeTail := items[len(items)-1], items[len(items)-2]
+	if isTimestamp(tail) {
+		return true, strings.Join(items[0:len(items)-1], "/")
+	}
+	if isTimestamp(oneBeforeTail) {
+		return true, strings.Join(items[0:len(items)-2], "/")
+	}
+	return false, ""
+}
+
+func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to list objects (bucket: %v, key: %v/)", s.bucket, prefix)
+	}
+	if *resp.IsTruncated {
+		//TODO: paging
+		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
+	}
+	for _, obj := range resp.Contents {
+		if ok, name := parseName(*obj.Key); ok {
+			log.Println(name)
+			if err := walkfn(name); err != nil {
+				return err
+			}
+			return nil
+		}
+		if err := s.walkNames(filepath.Join(prefix, *obj.Key), walkfn); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WalkLatestReleases walks the latest releases with the bucket.
+func (s *_s3) WalkLatestReleases(releaseFn func(*release.Release) error) error {
+	err := s.walkNames("", func(name string) error {
+		rel, err := s.FindLatestRelease(name)
+		if err != nil {
+			return err
+		}
+		if err := releaseFn(rel); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

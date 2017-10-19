@@ -43,8 +43,8 @@ func (cli *CLI) Run(args []string) int {
 		err = cli.doPush(args[2:])
 	case "pull":
 		err = cli.doPull(args[2:])
-	// case "sync":
-	// 	err = cli.doSync(args[2:])
+	case "sync":
+		err = cli.doSync(args[2:])
 	case "-v", "--version":
 		fmt.Fprintf(cli.errStream, "%s version %s, build %s \n", Name, Version, GitCommit)
 		return 0
@@ -183,4 +183,32 @@ func (cli *CLI) doPull(args []string) error {
 		return errors.Errorf("too few or many arguments")
 	}
 	return command.Pull(&param, flags.Arg(0), flags.Arg(1))
+}
+
+var syncHelpText = `
+Usage: binrep sync [options] DEST_DIR
+
+pull binary.
+
+Options:
+  --endpoint, -e	s3 uri
+`
+
+func (cli *CLI) doSync(args []string) error {
+	var param command.SyncParam
+	flags := cli.prepareFlags(syncHelpText)
+	flags.StringVar(&param.Endpoint, "e", "", "")
+	flags.StringVar(&param.Endpoint, "endpoint", "", "")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if param.Endpoint == "" {
+		fmt.Fprint(cli.errStream, syncHelpText)
+		return errors.Errorf("--endpoint required")
+	}
+	if len(flags.Args()) < 1 {
+		fmt.Fprint(cli.errStream, syncHelpText)
+		return errors.Errorf("too few arguments")
+	}
+	return command.Sync(&param, flags.Arg(0))
 }

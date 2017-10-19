@@ -37,6 +37,12 @@ func (rel *Release) Prefix() string {
 	return strings.Join([]string{rel.Name(), rel.Timestamp()}, "/")
 }
 
+// MetaPath returns the meta file path within the release.
+// eg. [`<host>/<user>/<project>/<timestamp>/meta.yml`]
+func (rel *Release) MetaPath() string {
+	return filepath.Join(rel.Prefix(), MetaFileName)
+}
+
 // Inspect inspetcs the release information.
 func (rel *Release) Inspect(w io.Writer) {
 	fmt.Fprintf(w, "NAME\tTIMESTAMP\t")
