@@ -359,7 +359,6 @@ func (s *_s3) walkNames(prefix string, walkfn func(name string) error) error {
 	}
 	for _, obj := range resp.Contents {
 		if ok, name := parseName(*obj.Key); ok {
-			log.Println(name)
 			if err := walkfn(name); err != nil {
 				return err
 			}
