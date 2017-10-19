@@ -14,6 +14,12 @@
   revision = "77ed807830b4df581417e7f89eb81d4872832b72"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/fujiwara/shapeio"
+  packages = ["."]
+  revision = "c073257dd7455637a1fa51201a9865a14ecb7f20"
+
+[[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
   revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
@@ -43,6 +49,18 @@
   version = "v0.8.0"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "aabf50738bcdd9b207582cbe796b59ed65d56680"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  revision = "6dc17368e09b0e8634d71cac8168d853e869a0c7"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -51,6 +69,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "679dedcdcd7cf4ebe408d69c2f7e7b66749c394a2b8802afb819c79a18c23e57"
+  inputs-digest = "3f84e8c221f4c3f6ac7bee324317b05b5721b43d3cb34294bf8207735baed5ae"
   solver-name = "gps-cdcl"
   solver-version = 1
