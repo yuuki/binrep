@@ -15,6 +15,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/ivpusic/grpool"
+  packages = ["."]
+  revision = "28957a27c9441f178d644aa598bac0aad4dd7bba"
+
+[[projects]]
+  branch = "master"
   name = "github.com/jehiah/go-strftime"
   packages = ["."]
   revision = "2efbe75097a505e2789f7e39cb9da067b5be8e3e"
@@ -39,6 +45,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "341e2e014227d70b93d545757f67d84b7f5931dc45cc857f26148a80cc52d866"
+  inputs-digest = "6539600cccd15eed6db04e8f9f92a8a4f9405259b77c44ea4356dab422fa38bc"
   solver-name = "gps-cdcl"
   solver-version = 1

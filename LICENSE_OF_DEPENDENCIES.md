@@ -15,3 +15,6 @@
 - github.com/go-yaml/yaml
   - No Copyright
   - [Apache License Version 2.0](https://github.com/go-yaml/yaml/blob/v2/LICENSE)
+- github.com/ivpusic/grpool
+  - Copyright (c) 2017 Ivan Pusic
+  - [MIT LICENSE](https://github.com/ivpusic/grpool/blob/master/LICENSE)
