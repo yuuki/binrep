@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -18,10 +19,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/ivpusic/grpool"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/yuuki/binrep/pkg/release"
+)
+
+const (
+	jobQueueLen = 100
 )
 
 // S3 defines the interface of the storage backend layer for S3.
@@ -33,6 +39,7 @@ type S3 interface {
 	PullRelease(rel *release.Release, installDir string) error
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
+	WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error
 }
 
 type _s3 struct {
@@ -174,7 +181,32 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
+	for _, b := range m.Binaries {
+		b.Body, err = s.GetBinaryBody(u, b.Name)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &m, nil
+}
+
+func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
+	key := filepath.Join(relURL.Path, binName)
+	resp, err := s.svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return nil, errors.Wrapf(err, "not found %v", key)
+			default:
+			}
+		}
+		return nil, errors.Wrapf(err, "failed to get object from s3 %s", relURL)
+	}
+	return resp.Body, nil
 }
 
 // PushRelease pushes the release into S3.
@@ -284,4 +316,65 @@ func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
 		}
 	}
 	return prunedTimestamps, nil
+}
+
+func (s *_s3) walkNames(pool *grpool.Pool, prefix string, walkfn func(name string) error) error {
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to list objects (bucket: %v, key: %v/)", s.bucket, prefix)
+	}
+	if *resp.IsTruncated {
+		//TODO: paging
+		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
+	}
+
+	var foundErr error // just use nonzeo exit
+	for _, obj := range resp.Contents {
+		if ok, name := release.ParseName(*obj.Key); ok {
+			name := name
+			pool.WaitCount(1)
+			pool.JobQueue <- func() {
+				defer pool.JobDone()
+				if err := walkfn(name); err != nil {
+					log.Printf("failed to walk %s: %s\n", name, err)
+					// just put error log, not to exit
+					foundErr = err
+				}
+			}
+			continue
+		}
+		nextPrefix := filepath.Join(prefix, *obj.Key)
+		if err := s.walkNames(pool, nextPrefix, walkfn); err != nil {
+			return err
+		}
+	}
+	pool.WaitAll()
+	if foundErr != nil {
+		return foundErr
+	}
+	return nil
+}
+
+// WalkLatestReleases walks the latest releases with the bucket.
+func (s *_s3) WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error {
+	pool := grpool.NewPool(concurrency, jobQueueLen)
+	defer pool.Release()
+
+	err := s.walkNames(pool, "", func(name string) error {
+		rel, err := s.FindLatestRelease(name)
+		if err != nil {
+			return err
+		}
+		if err := releaseFn(rel); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
