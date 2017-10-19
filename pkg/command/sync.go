@@ -27,6 +27,11 @@ func Sync(param *SyncParam, rootDir string) error {
 
 	err := st.WalkLatestReleases(func(rel *release.Release) error {
 		relPrefix := filepath.Join(rootDir, rel.Prefix())
+		// Skip download if the release already exists on the local filesystem.
+		if _, err := os.Stat(relPrefix); err == nil {
+			log.Printf("Skipped the download of %v\n", relPrefix)
+			return nil
+		}
 
 		log.Printf("--> Downloading to %v\n", relPrefix)
 
