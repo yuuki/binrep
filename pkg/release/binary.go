@@ -60,15 +60,6 @@ func (b *Binary) shortChecksum() string {
 	return b.Checksum[0:shortCheckSumLen]
 }
 
-// Read reads the Binary.Body.
-func (b *Binary) Read(r io.Reader) ([]byte, error) {
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read binary body %v", b.Name)
-	}
-	return data, nil
-}
-
 // Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
 	fmt.Fprintf(w, "%s/%s/%s\t", b.Name, b.Version, b.shortChecksum())
