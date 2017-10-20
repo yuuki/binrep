@@ -15,4 +15,4 @@ archive:
       format: zip
   files:
     - LICENSE
-    - LICENSE_OF_DEPENDENCIES.md
+    - README.md
