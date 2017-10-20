@@ -5,7 +5,7 @@ PKGS = $$(go list ./... | grep -v vendor)
 all: build
 
 .PHONY: build
-build:
+build: deps generate
 	go build -ldflags "-X main.GitCommit=\"$(COMMIT)\"" $(PKG)
 
 .PHONY: test
@@ -20,6 +20,19 @@ vet:
 lint:
 	golint $(PKGS)
 
+.PHONY: deps
+deps:
+	go get github.com/jteeuwen/go-bindata/...
+
+.PHONY: generate
+generate:
+	touch CREDITS
+	go generate -x ./...
+
+.PHONY: credits
+credits:
+	scripts/credits > CREDITS
+
 .PHONY: release
-release:
+release: credits generate
 	scripts/release
