@@ -1,5 +1,6 @@
 builds:
-  - env:
+  - ldflags: -s -w -X -X main.commit={{.Commit}} -X main.date={{.Date}}
+    env:
       - CGO_ENABLED=0
     goos:
       - windows

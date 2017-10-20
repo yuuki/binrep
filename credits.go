@@ -83,7 +83,7 @@ func vendorCredits() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "vendor/CREDITS", size: 50355, mode: os.FileMode(420), modTime: time.Unix(1508520611, 0)}
+	info := bindataFileInfo{name: "vendor/CREDITS", size: 50355, mode: os.FileMode(420), modTime: time.Unix(1508520931, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

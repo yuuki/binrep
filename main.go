@@ -52,7 +52,7 @@ func (cli *CLI) Run(args []string) int {
 	case "sync":
 		err = cli.doSync(args[2:])
 	case "-v", "--version":
-		fmt.Fprintf(cli.errStream, "%s version %s, build %s \n", Name, Version, GitCommit)
+		fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
 		return 0
 	case "--credits":
 		fmt.Println(creditsText)
@@ -89,7 +89,7 @@ Options:
 `
 
 func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
-	flags := flag.NewFlagSet(Name, flag.ContinueOnError)
+	flags := flag.NewFlagSet(name, flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 	flags.Usage = func() {
 		fmt.Fprint(cli.errStream, help)

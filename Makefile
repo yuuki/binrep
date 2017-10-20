@@ -1,4 +1,6 @@
-COMMIT = $$(git describe --always)
+COMMIT = $$(git describe --tags --always)
+# date format of goreleaser
+DATE = $$(date --utc '+%Y-%m-%d_%H:%M:%S')
 PKG = github.com/yuuki/binrep
 PKGS = $$(go list ./... | grep -v vendor)
 CREDITS = vendor/CREDITS
@@ -6,8 +8,8 @@ CREDITS = vendor/CREDITS
 all: build
 
 .PHONY: build
-build: deps generate
-	go build -ldflags "-X main.GitCommit=\"$(COMMIT)\"" $(PKG)
+build: deps
+	go build -ldflags "-X main.commit=\"$(COMMIT)\" -X main.date=\"$(DATE)\"" $(PKG)
 
 .PHONY: test
 test: vet
