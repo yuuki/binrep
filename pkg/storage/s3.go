@@ -407,7 +407,7 @@ func (s *_s3) walkReleases(pool *grpool.Pool, prefix string, walkfn func(*releas
 	return nil
 }
 
-// WalkNames walks releases.
+// WalkReleases walks releases.
 func (s *_s3) WalkReleases(concurrency int, releaseFn func(*release.Release) error) error {
 	pool := grpool.NewPool(concurrency, jobQueueLen)
 	defer pool.Release()
