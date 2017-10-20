@@ -42,7 +42,7 @@ func (cli *CLI) Run(args []string) int {
 
 	var err error
 
-	switch args[1] {
+	switch cmd := args[1]; cmd {
 	case "show":
 		err = cli.doShow(args[2:])
 	case "push":
@@ -60,6 +60,7 @@ func (cli *CLI) Run(args []string) int {
 	case "-h", "--help":
 		fmt.Fprint(cli.errStream, helpText)
 	default:
+		fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option", cmd)
 		fmt.Fprint(cli.errStream, helpText)
 		return 1
 	}
