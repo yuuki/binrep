@@ -114,21 +114,14 @@ s3://binrep-repository/
 
 # How to release
 
-binrep uses the following tools for the binary release.
+binrep uses the following tools for the artifact release.
 
 - [goreleaser](https://goreleaser.com/)
 - [gobump](https://github.com/motemen/gobump)
-
-The case of releasing patch version.
-
-```sh
-make patch release
-```
-
-The case of releasing minor version.
+- [ghch](https://github.com/Songmu/ghch)
 
 ```sh
-make minor release
+make release
 ```
 
 # License
