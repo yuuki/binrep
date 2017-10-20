@@ -22,11 +22,11 @@ lint:
 
 .PHONY: patch
 patch:
-	script/bump_version.sh patch
+	scripts/bump_version.sh patch
 
 .PHONY: minor
 minor:
-	script/bump_version.sh minor
+	scripts/bump_version.sh minor
 
 .PHONY: release
 release:
