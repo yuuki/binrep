@@ -20,14 +20,6 @@ vet:
 lint:
 	golint $(PKGS)
 
-.PHONY: patch
-patch:
-	scripts/bump_version.sh patch
-
-.PHONY: minor
-minor:
-	scripts/bump_version.sh minor
-
 .PHONY: release
 release:
-	goreleaser --rm-dist
+	scripts/release
