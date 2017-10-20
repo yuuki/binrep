@@ -1,4 +1,4 @@
-//go:generate go-bindata -pkg main -o credits.go CREDITS
+//go:generate go-bindata -pkg main -o credits.go vendor/CREDITS
 package main
 
 import (
@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	creditsText string = string(MustAsset("CREDITS"))
+	creditsText string = string(MustAsset("vendor/CREDITS"))
 )
 
 // CLI is the command line object.

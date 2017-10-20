@@ -1,6 +1,7 @@
 COMMIT = $$(git describe --always)
 PKG = github.com/yuuki/binrep
 PKGS = $$(go list ./... | grep -v vendor)
+CREDITS = vendor/CREDITS
 
 all: build
 
@@ -26,12 +27,12 @@ deps:
 
 .PHONY: generate
 generate:
-	touch CREDITS
+	touch $(CREDITS)
 	go generate -x ./...
 
 .PHONY: credits
 credits:
-	scripts/credits > CREDITS
+	scripts/credits > $(CREDITS)
 
 .PHONY: release
 release: credits generate
