@@ -1,12 +1,13 @@
 COMMIT = $$(git describe --always)
 PKG = github.com/yuuki/binrep
 PKGS = $$(go list ./... | grep -v vendor)
+CREDITS = vendor/CREDITS
 
 all: build
 
 .PHONY: build
-build:
-	go build -ldflags "-X main.GitCommit=\"$(COMMIT)\"" $(PKG)
+build: deps generate
+	go build -ldflags "-s -w -X main.GitCommit=\"$(COMMIT)\"" $(PKG)
 
 .PHONY: test
 test: vet
@@ -20,6 +21,18 @@ vet:
 lint:
 	golint $(PKGS)
 
+.PHONY: deps
+deps:
+	go get github.com/jteeuwen/go-bindata/...
+
+.PHONY: generate
+generate:
+	go generate -x ./...
+
+.PHONY: credits
+credits:
+	scripts/credits > $(CREDITS)
+
 .PHONY: release
-release:
+release: credits generate
 	scripts/release
