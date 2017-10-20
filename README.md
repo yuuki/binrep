@@ -18,12 +18,58 @@ The deployment of (internel) tools written by Go takes a lot more works, especia
 
 ## Commands
 
+### list
+
+```sh
+$ binrep list --endpoint s3://binrep-bucket
+github.com/fujiwara/stretcher/20171013135903/
+github.com/fujiwara/stretcher/20171014110009/
+github.com/motemen/ghq/20171013140424/
+github.com/yuuki/droot/20171017152626/
+github.com/yuuki/droot/20171018125535/
+github.com/yuuki/droot/20171019204009/
+...
 ```
-binrep show --endpoint s3://<bucket> github.com/yuuki/droot
-binrep push --endpoint s3://<bucket> github.com/yuuki/droot ./droot
-binrep pull --endpoint s3://<bucket> github.com/yuuki/droot /usr/local/bin
-binrep sync --endpoint s3://<bucket> /usr/local/bin
+
+### show
+
+```sh
+$ binrep show --endpoint s3://binrep-bucket github.com/yuuki/droot
+NAME                    TIMESTAMP       BINNARY1
+github.com/yuuki/droot  20171019204009  droot//2e6ccc3
 ```
+
+### push
+
+```sh
+$ binrep push --endpoint s3://binrep-bucket github.com/yuuki/droot ./droot
+--> Uploading [./droot] to s3://binrep-bucket/github.com/yuuki/droot/20171020152356
+Uploaded to s3://binrep-bucket/github.com/yuuki/droot/20171020152356
+--> Cleaning up the old releases
+Cleaned up 20171017152626
+```
+
+`push` supports to push multiple binary files.
+
+### pull
+
+```sh
+$ binrep pull --endpoint s3://binrep-bucket github.com/yuuki/droot /usr/local/bin
+--> Downloading s3://binrep-bucket/github.com/yuuki/binrep/20171019204009 to /usr/local/bin
+```
+
+### sync
+
+```sh
+$ binrep sync --endpoint s3://binrep-bucket --concurrency 4 --max-bandwidth '5 MB' /opt/binrep/
+Set max bandwidth total: 10 MB/sec, per-release: 2.5 MB/sec
+--> Downloading to /opt/binrep/github.com/fujiwara/stretcher/20171014110009/
+--> Downloading to /opt/binrep/github.com/motemen/ghq/20171013140424/
+--> Downloading to /opt/binrep/github.com/yuuki/droot/20171019204009/
+...
+```
+
+`sync` skips the download if there are already the same timestamp release on local filesystem.
 
 # Directory layout on S3 bucket
 
