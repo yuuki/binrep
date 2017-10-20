@@ -43,6 +43,8 @@ func (cli *CLI) Run(args []string) int {
 	var err error
 
 	switch cmd := args[1]; cmd {
+	case "list":
+		err = cli.doList(args[2:])
 	case "show":
 		err = cli.doShow(args[2:])
 	case "push":
@@ -76,9 +78,10 @@ func (cli *CLI) Run(args []string) int {
 var helpText = `
 Usage: binrep [options]
 
-  static binary repository.
+  The static binary repository manager.
 
 Commands:
+  list		show releases on remote repository
   show          show binary information.
   push		push binary.
   pull		pull binary.
@@ -96,6 +99,34 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 		fmt.Fprint(cli.errStream, help)
 	}
 	return flags
+}
+
+var listHelpText = `
+Usage: binrep list [options]
+
+show releases on remote repository
+
+Options:
+  --endpoint, -e   s3 URI
+`
+
+func (cli *CLI) doList(args []string) error {
+	var param command.ListParam
+	flags := cli.prepareFlags(listHelpText)
+	flags.StringVar(&param.Endpoint, "e", "", "")
+	flags.StringVar(&param.Endpoint, "endpoint", "", "")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if param.Endpoint == "" {
+		fmt.Fprint(cli.errStream, listHelpText)
+		return errors.Errorf("--endpoint required")
+	}
+	if len(flags.Args()) != 0 {
+		fmt.Fprint(cli.errStream, listHelpText)
+		return errors.Errorf("extra arguments")
+	}
+	return command.List(&param)
 }
 
 var showHelpText = `
