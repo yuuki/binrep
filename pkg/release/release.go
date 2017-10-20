@@ -97,3 +97,21 @@ func ParseName(str string) (bool, string) {
 	}
 	return false, ""
 }
+
+// ParseName parses a formatted name, and returns the bool of the success or
+// false and the formatted name.
+func ParseRelease(str string) (bool, string) {
+	// str is expected to be 'github.com/yuuki/droot/20171017152508/droot'
+	items := strings.Split(str, "/")
+	if len(items) < 2 {
+		return false, ""
+	}
+	tail, oneBeforeTail := items[len(items)-1], items[len(items)-2]
+	if isTimestamp(tail) {
+		return true, strings.Join(items[0:len(items)-1], "/")
+	}
+	if isTimestamp(oneBeforeTail) {
+		return true, strings.Join(items[0:len(items)-2], "/")
+	}
+	return false, ""
+}

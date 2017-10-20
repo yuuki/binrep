@@ -39,6 +39,7 @@ type S3 interface {
 	PullRelease(rel *release.Release, installDir string) error
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
+	WalkReleases(concurrency int, walkfn func(*release.Release) error) error
 	WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error
 }
 
@@ -358,7 +359,72 @@ func (s *_s3) walkNames(pool *grpool.Pool, prefix string, walkfn func(name strin
 	return nil
 }
 
-// WalkLatestReleases walks the latest releases with the bucket.
+func (s *_s3) walkReleases(pool *grpool.Pool, prefix string, walkfn func(*release.Release) error) error {
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket:    aws.String(s.bucket),
+		Prefix:    aws.String(prefix),
+		Delimiter: aws.String("/"),
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to list objects (bucket: %v, key: %v/)", s.bucket, prefix)
+	}
+	if *resp.IsTruncated {
+		//TODO: paging
+		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
+	}
+	var foundErr error // just use nonzeo exit
+	for _, obj := range resp.CommonPrefixes {
+		releasePath := *obj.Prefix
+		if ok, name := release.ParseName(releasePath); ok {
+			name := name
+			pool.WaitCount(1)
+			pool.JobQueue <- func() {
+				defer pool.JobDone()
+
+				rel, err := s.FindReleaseByTimestamp(name, filepath.Base(releasePath))
+				if err != nil {
+					log.Printf("failed to find release %s: %s\n", releasePath, err)
+					// just put error log, not to exit
+					foundErr = err
+					return
+				}
+				if err := walkfn(rel); err != nil {
+					log.Printf("failed to walk %s: %s\n", releasePath, err)
+					// just put error log, not to exit
+					foundErr = err
+					return
+				}
+			}
+		}
+		if err := s.walkReleases(pool, releasePath, walkfn); err != nil {
+			return err
+		}
+	}
+	pool.WaitAll()
+	if foundErr != nil {
+		return foundErr
+	}
+	return nil
+}
+
+// WalkNames walks releases.
+func (s *_s3) WalkReleases(concurrency int, releaseFn func(*release.Release) error) error {
+	pool := grpool.NewPool(concurrency, jobQueueLen)
+	defer pool.Release()
+
+	err := s.walkReleases(pool, "", func(rel *release.Release) error {
+		if err := releaseFn(rel); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// WalkLatestReleases walks the latest releases.
 func (s *_s3) WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error {
 	pool := grpool.NewPool(concurrency, jobQueueLen)
 	defer pool.Release()
