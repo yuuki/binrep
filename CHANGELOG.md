@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.5.1](https://github.com/yuuki/binrep/compare/v0.5.0...v0.5.1) (2017-10-21)
+
+
 ## [v0.5.0](https://github.com/yuuki/binrep/compare/v0.4.0...v0.5.0) (2017-10-21)
 
 * list subcommand [#3](https://github.com/yuuki/binrep/pull/3) ([yuuki](https://github.com/yuuki))
