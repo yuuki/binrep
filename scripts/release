@@ -21,4 +21,4 @@ git tag "v$next_version"
 git push && git push --tags
 
 echo "--> Releasing the artifacts to GitHub Releases"
-goreleaser --rm-dist --release-notes $(ghch --from "v$current_version" --to "v$next_version")
+goreleaser --rm-dist --release-notes <(ghch -F markdown --from "v$current_version" --to "v$next_version")
