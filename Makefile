@@ -7,7 +7,7 @@ all: build
 
 .PHONY: build
 build: deps generate
-	go build -ldflags "-s -w -X main.GitCommit=\"$(COMMIT)\"" $(PKG)
+	go build -ldflags "-X main.GitCommit=\"$(COMMIT)\"" $(PKG)
 
 .PHONY: test
 test: vet
