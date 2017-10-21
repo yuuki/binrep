@@ -40,7 +40,7 @@ The following features will **not** be supported.
 ### Getting the latest version
 
 ```sh
-$ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/install_latest_binary | bash /dev/stdin $GOOS $GOARCH | tar -xzf - -C /usr/local/bin/
+$ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/install_latest_binary | bash /dev/stdin $GOOS $GOARCH | tar --exclude 'README.md' --exclude 'LICENSE' -xzf - -C /usr/local/bin/
 ```
 
 - GOOS: 'linux' or 'darwin'
