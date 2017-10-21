@@ -1,4 +1,4 @@
-binrep
+Binrep
 ======
 
 [![Build Status](https://travis-ci.org/yuuki/binrep.png?branch=master)][travis]
@@ -9,13 +9,26 @@ binrep
 [goreportcard]: (https://goreportcard.com/report/github.com/yuuki/binrep)
 [license]: https://github.com/yuuki/binrep/blob/master/LICENSE
 
-Simple static binary repository manager on Amazon S3 as backend storage.
+Binrep is the static binary repository manager that uses Amazon S3 as file storage.
 
 # Overview
 
-`binrep` provides a simple way to store and deploy your static binary files such as Go binary. binrep pushes the binary files into your S3 bucket, builds the directory layout like `go get` does on the bucket, and pulls the binary files from the bucket.
+`binrep` provides a simple way to store and deploy static binary files such as Go binaries, tarballs, images and web assets(css/javascript). `binrep` just pushes static binary files into a S3 bucket with directory layouts like `go get` does, and pulls the binaries from the bucket.
 
-The deployment of (internel) tools written by Go takes a lot more works, especially in the environment with many servers, than that of no-dependent LL scripts such as shell script, Perl, Python, Ruby). Git is an informat approach to the deployment, but git is not for binary management. The next approach is a package manager such apt or yum, but it takes a lot of trouble to make packages. The other approach is just to use a HTTP file server including S3, but it needs uniform and accessible location of the binary files and version management. There, `binrep` resolves the problem of the binary management.
+The deployment of (private) tools written by Go takes a lot more works, especially in the environment that has many servers, than that of LL scripts in a single file such as shell script, Perl, Python, Ruby). Git is an informat approach to the deployment, but git is not for binary management. The next approach is a package manager such apt or yum, but it takes a lot of trouble to make packages. The other approach is just to use a HTTP file server including S3, but it needs uniform and accessible location of binary files and the version management. There, `binrep` resolves the problems of static binary management.
+
+## Features
+
+The following features will be supported.
+
+- Amazon S3 as storage backend
+- directory layout `<host>/<user>/<project>` like `go get` and [ghq](https://github.com/motemen/ghq) do
+- version management like [Capistrano](http://capistranorb.com/)
+- synchronization of all latest binary files from S3 to a local filesystem
+
+The following features will **not** be supported.
+
+- dependency management, that is supported by popular package managers such as Apt, Yum and Rubygems
 
 # Usage
 
