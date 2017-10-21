@@ -7,35 +7,49 @@ import (
 	"testing"
 )
 
-func TestRun_versionFlag(t *testing.T) {
-	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
-	cli := &CLI{outStream: outStream, errStream: errStream}
-	args := strings.Split("binrep --version", " ")
-
-	status := cli.Run(args)
-	if status != 0 {
-		t.Errorf("expected %d to eq %d", status, 0)
+func TestRun_global(t *testing.T) {
+	tests := []struct {
+		desc           string
+		arg            string
+		expectedStatus int
+		expectedSubOut string
+		expectedSubErr string
+	}{
+		{
+			desc:           "version flag",
+			arg:            "binrep --version",
+			expectedStatus: 0,
+			expectedSubErr: fmt.Sprintf("binrep version %s, build %s, date %s", version, commit, date),
+		},
+		{
+			desc:           "undefined flag",
+			arg:            "binrep --undefined",
+			expectedStatus: 1,
+			expectedSubErr: "--undefined is undefined subcommand or option",
+		},
+		{
+			desc:           "credits flag",
+			arg:            "binrep --credits",
+			expectedStatus: 0,
+			expectedSubOut: "= Binrep licensed under: =",
+		},
 	}
+	for _, tc := range tests {
+		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
+		cli := &CLI{outStream: outStream, errStream: errStream}
+		args := strings.Split(tc.arg, " ")
 
-	expected := fmt.Sprintf("binrep version %s", version)
-	if !strings.Contains(errStream.String(), expected) {
-		t.Errorf("expected %q to eq %q", errStream.String(), expected)
-	}
-}
+		status := cli.Run(args)
+		if status != tc.expectedStatus {
+			t.Errorf("desc: %q, status should be %v, not %v", tc.desc, tc.expectedStatus, status)
+		}
 
-func TestRun_parseError(t *testing.T) {
-	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
-	cli := &CLI{outStream: outStream, errStream: errStream}
-	args := strings.Split("binrep --not-exist", " ")
-
-	status := cli.Run(args)
-	if status != 1 {
-		t.Errorf("expected %d to eq %d", status, 1)
-	}
-
-	expected := "--not-exist is undefined subcommand or option"
-	if !strings.Contains(errStream.String(), expected) {
-		t.Fatalf("expected %q to contain %q", errStream.String(), expected)
+		if !strings.Contains(outStream.String(), tc.expectedSubOut) {
+			t.Errorf("desc: %q, subout should contain %q, got %q", tc.desc, tc.expectedSubOut, outStream.String())
+		}
+		if !strings.Contains(errStream.String(), tc.expectedSubErr) {
+			t.Errorf("desc: %q, subout should contain %q, got %q", tc.desc, tc.expectedSubErr, errStream.String())
+		}
 	}
 }
 
@@ -168,7 +182,7 @@ func TestRun_subCommand(t *testing.T) {
 		}
 
 		if !strings.Contains(errStream.String(), tc.expectedSubOut) {
-			t.Errorf("desc: %q, subout should contain %q, not %q", tc.desc, tc.expectedSubOut, errStream.String())
+			t.Errorf("desc: %q, subout should contain %q, got %q", tc.desc, tc.expectedSubOut, errStream.String())
 		}
 	}
 }
