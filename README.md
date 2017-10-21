@@ -24,6 +24,15 @@ The deployment of (internel) tools written by Go takes a lot more works, especia
 - Create S3 bucket for `binrep`.
 - Install `binrep` binary, see https://github.com/yuuki/binrep/releases .
 
+### Getting the latest version
+
+```sh
+$ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/install_latest_binary | bash /dev/stdin $GOOS $GOARCH
+```
+
+- GOOS: 'linux' or 'darwin'
+- GOARCH: '386' or 'amd64'
+
 ## Commands
 
 ### list

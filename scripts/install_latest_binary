@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e -o pipefail
+
+function print_help() {
+    cat <<EOS >> /dev/stderr
+Usage: $0 GOOS GOARCH
+
+GOOS: 'linux' or 'darwin'
+GOARCH: 'amd64' or '386'
+EOS
+}
+
+name='binrep'
+proj="github.com/yuuki/${name}"
+
+goos="$1"
+if [ -z "$goos" ]; then
+    print_help
+    exit 1
+fi
+goarch="$2"
+if [ -z "$goarch" ]; then
+    print_help
+    exit 1
+fi
+
+latest_version=$(curl -sSL -H "Accept: application/json" "https://${proj}/releases/latest" | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+latest_version_num=${latest_version#v}
+
+artifact_url="https://${proj}/releases/download/${latest_version}/${name}_${latest_version_num}_${goos}_${goarch}.tar.gz"
+echo "--> Downloading ${proj}@${latest_version} from '${artifact_url}'" >> /dev/stderr
+
+curl -sSL "https://${proj}/releases/download/${latest_version}/${name}_${latest_version_num}_${goos}_${goarch}.tar.gz"
