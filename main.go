@@ -53,7 +53,7 @@ func (cli *CLI) Run(args []string) int {
 		err = cli.doPull(args[2:])
 	case "sync":
 		err = cli.doSync(args[2:])
-	case "-v", "--version":
+	case "--version":
 		fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
 		return 0
 	case "--credits":
