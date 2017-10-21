@@ -150,11 +150,11 @@ func (cli *CLI) doShow(args []string) error {
 		return err
 	}
 	if param.Endpoint == "" {
-		fmt.Fprint(cli.errStream, pushHelpText)
+		fmt.Fprint(cli.errStream, showHelpText)
 		return errors.Errorf("--endpoint required")
 	}
 	if len(flags.Args()) < 1 {
-		fmt.Fprint(cli.errStream, pushHelpText)
+		fmt.Fprint(cli.errStream, showHelpText)
 		return errors.Errorf("too few arguments")
 	}
 	return command.Show(&param, flags.Arg(0))
