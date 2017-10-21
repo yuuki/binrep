@@ -2,9 +2,11 @@ binrep
 ======
 
 [![Build Status](https://travis-ci.org/yuuki/binrep.png?branch=master)][travis]
+[![Go Report Card](https://goreportcard.com/badge/github.com/yuuki/droot)][goreportcard]
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
 [travis]: https://travis-ci.org/yuuki/binrep
+[goreportcard]: (https://goreportcard.com/report/github.com/yuuki/binrep)
 [license]: https://github.com/yuuki/binrep/blob/master/LICENSE
 
 Simple static binary repository manager on Amazon S3 as backend storage.
