@@ -13,15 +13,15 @@ build: deps
 
 .PHONY: test
 test: vet
-	go test -v $(PKGS)
+	go test -v ./...
 
 .PHONY: vet
 vet:
-	go vet $(PKGS)
+	go vet ./...
 
 .PHONY: lint
 lint:
-	golint $(PKGS)
+	golint -set_exit_status $(PKGS)
 
 .PHONY: deps
 deps:
