@@ -57,7 +57,7 @@ func (cli *CLI) Run(args []string) int {
 		fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
 		return 0
 	case "--credits":
-		fmt.Println(creditsText)
+		fmt.Fprintln(cli.outStream, creditsText)
 		return 0
 	case "-h", "--help":
 		fmt.Fprint(cli.errStream, helpText)
