@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	creditsText string = string(MustAsset("vendor/CREDITS"))
+	creditsText = string(MustAsset("vendor/CREDITS"))
 )
 
 // CLI is the command line object.

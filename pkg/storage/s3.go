@@ -413,10 +413,7 @@ func (s *_s3) WalkReleases(concurrency int, releaseFn func(*release.Release) err
 	defer pool.Release()
 
 	err := s.walkReleases(pool, "", func(rel *release.Release) error {
-		if err := releaseFn(rel); err != nil {
-			return err
-		}
-		return nil
+		return releaseFn(rel)
 	})
 	if err != nil {
 		return err
@@ -434,10 +431,7 @@ func (s *_s3) WalkLatestReleases(concurrency int, releaseFn func(*release.Releas
 		if err != nil {
 			return err
 		}
-		if err := releaseFn(rel); err != nil {
-			return err
-		}
-		return nil
+		return releaseFn(rel)
 	})
 	if err != nil {
 		return err

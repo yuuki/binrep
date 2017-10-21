@@ -27,9 +27,5 @@ func Pull(param *PullParam, name, installPath string) error {
 
 	log.Println("-->", "Downloading", rel.URL, "to", installPath)
 
-	if err := st.PullRelease(rel, installPath); err != nil {
-		return err
-	}
-
-	return nil
+	return st.PullRelease(rel, installPath)
 }
