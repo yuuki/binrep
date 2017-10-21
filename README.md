@@ -27,7 +27,7 @@ The deployment of (internel) tools written by Go takes a lot more works, especia
 ### Getting the latest version
 
 ```sh
-$ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/install_latest_binary | bash /dev/stdin $GOOS $GOARCH
+$ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/install_latest_binary | bash /dev/stdin $GOOS $GOARCH | tar -xzf - -C /usr/local/bin/
 ```
 
 - GOOS: 'linux' or 'darwin'
