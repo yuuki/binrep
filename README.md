@@ -91,7 +91,7 @@ $ binrep pull --endpoint s3://binrep-bucket github.com/yuuki/droot /usr/local/bi
 ### sync
 
 ```sh
-$ binrep sync --endpoint s3://binrep-bucket --concurrency 4 --max-bandwidth '5 MB' /opt/binrep/
+$ binrep sync --endpoint s3://binrep-bucket --concurrency 4 --max-bandwidth '10 MB' /opt/binrep/
 Set max bandwidth total: 10 MB/sec, per-release: 2.5 MB/sec
 --> Downloading to /opt/binrep/github.com/fujiwara/stretcher/20171014110009/
 --> Downloading to /opt/binrep/github.com/motemen/ghq/20171013140424/
