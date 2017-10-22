@@ -25,6 +25,7 @@ The following features will be supported.
 - directory layout `<host>/<user>/<project>` like `go get` and [ghq](https://github.com/motemen/ghq) do
 - version management like [Capistrano](http://capistranorb.com/)
 - synchronization of all latest binary files from S3 to a local filesystem
+- limitable network bandwidth
 
 The following features will **not** be supported.
 
