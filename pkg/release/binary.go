@@ -36,9 +36,12 @@ func BuildBinary(name string, body io.Reader) (*Binary, error) {
 }
 
 func checksum(r io.Reader) (string, error) {
+	if r == nil {
+		return "", errors.New("try to read nil")
+	}
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
-		errors.Errorf("failed to read data for checksum")
+		return "", errors.New("failed to read data for checksum")
 	}
 	return fmt.Sprintf("%x", sha256.Sum256(body)), nil
 }
