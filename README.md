@@ -126,15 +126,16 @@ s3://binrep-repository/
     -- prometheus/
         -- prometheus/
             -- 20171012081234/
+                -- meta.yml
                 -- prometheus
                 -- promtool
-                -- meta.yml
 |-- ghe.internal/
     -- opsteam/
         -- tools
             -- 20171010071022/
                 -- ec2_bootstrap
                 -- ec2_build_ami
+                -- meta.yml
                 -- mysql_create_slave_snapshot
 
 ```
