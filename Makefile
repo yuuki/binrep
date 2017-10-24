@@ -33,6 +33,7 @@ deps:
 .PHONY: devel-deps
 devel-deps: deps
 	go get github.com/golang/lint/golint
+	go get golang.org/x/tools/cmd/cover
 	go get github.com/mattn/goveralls
 	go get github.com/motemen/gobump
 	go get github.com/Songmu/ghch
