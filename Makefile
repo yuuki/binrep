@@ -23,6 +23,9 @@ vet:
 lint: devel-deps
 	golint -set_exit_status $(PKGS)
 
+cover: devel-deps
+	goveralls -service=travis-ci
+
 .PHONY: deps
 deps:
 	go get github.com/jteeuwen/go-bindata/...
@@ -30,6 +33,7 @@ deps:
 .PHONY: devel-deps
 devel-deps: deps
 	go get github.com/golang/lint/golint
+	go get github.com/mattn/goveralls
 	go get github.com/motemen/gobump
 	go get github.com/Songmu/ghch
 
