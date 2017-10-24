@@ -20,12 +20,18 @@ vet:
 	go vet ./...
 
 .PHONY: lint
-lint:
+lint: devel-deps
 	golint -set_exit_status $(PKGS)
 
 .PHONY: deps
 deps:
 	go get github.com/jteeuwen/go-bindata/...
+
+.PHONY: deps
+devel-deps:
+	go get github.com/golang/lint/golint
+	go get github.com/motemen/gobump
+	go get github.com/Songmu/ghch
 
 .PHONY: generate
 generate:
