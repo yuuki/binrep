@@ -22,8 +22,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
-  version = "v1.28.2"
+  revision = "5b3e00af70a9484542169a976dcab8d03e601a17"
+  version = "v1.30.0"
 
 [[projects]]
   branch = "master"
@@ -43,6 +43,11 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  name = "github.com/kylelemons/godebug"
+  packages = ["diff","pretty"]
+  revision = "d65d576e9348f5982d7f6d83682b694e731a45c6"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -52,7 +57,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "aabf50738bcdd9b207582cbe796b59ed65d56680"
+  revision = "92447d55896d6f92b4a0d4fd83bd078b0374e8fa"
 
 [[projects]]
   branch = "master"
@@ -69,6 +74,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7c9f11ebf7ef7fed8520809fb763183145356622ea754bd6e0567242c5c1b3ab"
+  inputs-digest = "06bc580df0c5a9f9f8bdeebd66c96a57d69618efb11fd9cdc91e0f0a420c618f"
   solver-name = "gps-cdcl"
   solver-version = 1
