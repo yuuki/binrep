@@ -27,8 +27,8 @@ lint: devel-deps
 deps:
 	go get github.com/jteeuwen/go-bindata/...
 
-.PHONY: deps
-devel-deps:
+.PHONY: devel-deps
+devel-deps: deps
 	go get github.com/golang/lint/golint
 	go get github.com/motemen/gobump
 	go get github.com/Songmu/ghch
