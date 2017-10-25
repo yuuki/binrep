@@ -87,7 +87,7 @@ func TestValidateChecksum_errorInvalidChecksum(t *testing.T) {
 	}
 }
 
-func TestInspect(t *testing.T) {
+func TestBinaryInspect(t *testing.T) {
 	b, err := BuildBinary("github.com/yuuki/droot", bytes.NewBufferString("body"))
 	if err != nil {
 		panic(err)
