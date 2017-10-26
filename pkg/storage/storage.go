@@ -4,8 +4,8 @@ import (
 	"github.com/yuuki/binrep/pkg/release"
 )
 
-// StorageAPI defines the interface of the storage backend layer for S3.
-type StorageAPI interface {
+// API defines the interface of the storage backend layer for S3.
+type API interface {
 	FindLatestRelease(name string) (*release.Release, error)
 	FindReleaseByTimestamp(name, timestamp string) (*release.Release, error)
 	CreateRelease(name string, bins []*release.Binary) (*release.Release, error)

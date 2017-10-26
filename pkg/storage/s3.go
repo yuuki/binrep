@@ -51,7 +51,7 @@ type _s3 struct {
 }
 
 // New creates a StorageAPI client object.
-func New(sess *session.Session, bucket string) StorageAPI {
+func New(sess *session.Session, bucket string) API {
 	return &_s3{
 		bucket:     strings.TrimPrefix(bucket, "s3://"),
 		svc:        s3.New(sess),
