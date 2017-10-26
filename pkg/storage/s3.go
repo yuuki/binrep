@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -221,25 +220,6 @@ func (s *_s3) PushRelease(rel *release.Release) error {
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to upload file to %s", rel.URL)
-		}
-	}
-	return nil
-}
-
-// PullRelease pulls the binary files within the release on S3 to installDir.
-func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
-	for _, bin := range rel.Meta.Binaries {
-		path := filepath.Join(installDir, bin.Name)
-		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-		if err != nil {
-			return errors.Wrapf(err, "failed to open %v", path)
-		}
-		_, err = bin.CopyAndValidateChecksum(file, bin.Body)
-		if err != nil {
-			if release.IsChecksumError(err) {
-				os.Remove(path)
-			}
-			return err
 		}
 	}
 	return nil

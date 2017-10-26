@@ -2,9 +2,13 @@ package command
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/pkg/errors"
 
+	"github.com/yuuki/binrep/pkg/release"
 	"github.com/yuuki/binrep/pkg/storage"
 )
 
@@ -27,5 +31,27 @@ func Pull(param *PullParam, name, installPath string) error {
 
 	log.Println("-->", "Downloading", rel.URL, "to", installPath)
 
-	return st.PullRelease(rel, installPath)
+	if err := pullRelease(rel, installPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func pullRelease(rel *release.Release, installPath string) error {
+	for _, bin := range rel.Meta.Binaries {
+		path := filepath.Join(installPath, bin.Name)
+		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			return errors.Wrapf(err, "failed to open %v", path)
+		}
+		_, err = bin.CopyAndValidateChecksum(file, bin.Body)
+		if err != nil {
+			if release.IsChecksumError(err) {
+				os.Remove(path)
+			}
+			return err
+		}
+	}
+	return nil
 }
