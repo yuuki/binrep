@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -54,36 +53,6 @@ func TestBuildBinary_errorChecksumClosedFile(t *testing.T) {
 
 	if fmt.Sprintf("%s", err) != "failed to read data for checksum" {
 		t.Fatalf("err = %q; want %q", err, "failed to read data for checksum")
-	}
-}
-
-func TestValidateChecksum(t *testing.T) {
-	expected := bytes.NewBufferString("body")
-	b, err := BuildBinary("hoge", expected)
-	if err != nil {
-		panic(err)
-	}
-	input := bytes.NewBufferString("body")
-
-	err = b.ValidateChecksum(input)
-
-	if err != nil {
-		t.Fatalf("should not raise error: %s", err)
-	}
-}
-
-func TestValidateChecksum_errorInvalidChecksum(t *testing.T) {
-	expected := bytes.NewBufferString("body")
-	b, err := BuildBinary("github.com/yuuki/droot", expected)
-	if err != nil {
-		panic(err)
-	}
-	input := bytes.NewBufferString("invalid body")
-
-	err = b.ValidateChecksum(input)
-
-	if !strings.Contains(fmt.Sprintf("%s", err), "invalid checksum") {
-		t.Errorf("should raise 'invalid checksum' error: %s", err)
 	}
 }
 

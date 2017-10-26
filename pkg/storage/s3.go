@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -191,6 +190,7 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	return &m, nil
 }
 
+// GetBinaryBody returns the binary body reader.
 func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
 	key := filepath.Join(relURL.Path, binName)
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
@@ -220,31 +220,6 @@ func (s *_s3) PushRelease(rel *release.Release) error {
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to upload file to %s", rel.URL)
-		}
-	}
-	return nil
-}
-
-// PullRelease pulls the binary files within the release on S3 to installDir.
-func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
-	for _, bin := range rel.Meta.Binaries {
-		path := filepath.Join(installDir, bin.Name)
-		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-		if err != nil {
-			return errors.Wrapf(err, "failed to open %v", path)
-		}
-
-		_, err = s.downloader.Download(file, &s3.GetObjectInput{
-			Bucket: aws.String(s.bucket),
-			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
-		})
-		if err != nil {
-			return errors.Wrapf(err, "failed to upload file to %v", rel.URL)
-		}
-
-		if err := bin.ValidateChecksum(file); err != nil {
-			os.Remove(path)
-			return err
 		}
 	}
 	return nil

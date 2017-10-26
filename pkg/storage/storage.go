@@ -10,7 +10,6 @@ type API interface {
 	FindReleaseByTimestamp(name, timestamp string) (*release.Release, error)
 	CreateRelease(name string, bins []*release.Binary) (*release.Release, error)
 	PushRelease(rel *release.Release) error
-	PullRelease(rel *release.Release, installDir string) error
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
 	WalkReleases(concurrency int, walkfn func(*release.Release) error) error
