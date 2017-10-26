@@ -233,17 +233,11 @@ func (s *_s3) PullRelease(rel *release.Release, installDir string) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to open %v", path)
 		}
-
-		_, err = s.downloader.Download(file, &s3.GetObjectInput{
-			Bucket: aws.String(s.bucket),
-			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
-		})
+		_, err = bin.CopyAndValidateChecksum(file, bin.Body)
 		if err != nil {
-			return errors.Wrapf(err, "failed to upload file to %v", rel.URL)
-		}
-
-		if err := bin.ValidateChecksum(file); err != nil {
-			os.Remove(path)
+			if release.IsChecksumError(err) {
+				os.Remove(path)
+			}
 			return err
 		}
 	}

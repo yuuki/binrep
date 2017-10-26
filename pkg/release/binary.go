@@ -59,6 +59,40 @@ func (b *Binary) ValidateChecksum(r io.Reader) error {
 	return nil
 }
 
+// InvalidChecksumError represents an error of the checksum.
+type InvalidChecksumError struct {
+	got  string
+	want string
+}
+
+// Error returns the error message for InvalidChecksumError.
+func (e *InvalidChecksumError) Error() string {
+	return fmt.Sprintf("got: %s, want: %s", e.got, e.want)
+}
+
+// IsChecksumError returns that the type of err matches InvalidChecksumError type or not.
+func IsChecksumError(err error) bool {
+	_, ok := errors.Cause(err).(*InvalidChecksumError)
+	return ok
+}
+
+// CopyAndIsValidChecksum copies src to dst and calculate checksum of src, then check it.
+func (b *Binary) CopyAndValidateChecksum(dst io.Writer, src io.Reader) (int64, error) {
+	h := sha256.New()
+	w := io.MultiWriter(h, dst)
+
+	written, err := io.Copy(w, src)
+	if err != nil {
+		return written, err
+	}
+	sum := fmt.Sprintf("%x", h.Sum(nil))
+	if b.Checksum != sum {
+		return written, errors.WithStack(&InvalidChecksumError{got: sum, want: b.Checksum})
+	}
+
+	return written, nil
+}
+
 func (b *Binary) shortChecksum() string {
 	return b.Checksum[0:shortCheckSumLen]
 }
