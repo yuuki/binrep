@@ -16,9 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/ivpusic/grpool"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -30,11 +28,26 @@ const (
 	jobQueueLen = 100
 )
 
+type s3API interface {
+	GetObject(*s3.GetObjectInput) (*s3.GetObjectOutput, error)
+	ListObjectsV2(*s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error)
+	PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error)
+	DeleteObject(*s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
+}
+
+type s3UploaderAPI interface {
+	Upload(*s3manager.UploadInput, ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error)
+}
+
+type s3DownloaderAPI interface {
+	Download(io.WriterAt, *s3.GetObjectInput, ...func(*s3manager.Downloader)) (int64, error)
+}
+
 type _s3 struct {
 	bucket     string
-	svc        s3iface.S3API
-	uploader   s3manageriface.UploaderAPI
-	downloader s3manageriface.DownloaderAPI
+	svc        s3API
+	uploader   s3UploaderAPI
+	downloader s3DownloaderAPI
 }
 
 // New creates a StorageAPI client object.
