@@ -30,19 +30,6 @@ const (
 	jobQueueLen = 100
 )
 
-// S3 defines the interface of the storage backend layer for S3.
-type S3 interface {
-	FindLatestRelease(name string) (*release.Release, error)
-	FindReleaseByTimestamp(name, timestamp string) (*release.Release, error)
-	CreateRelease(name string, bins []*release.Binary) (*release.Release, error)
-	PushRelease(rel *release.Release) error
-	PullRelease(rel *release.Release, installDir string) error
-	DeleteRelease(name, timestamp string) error
-	PruneReleases(name string, keep int) ([]string, error)
-	WalkReleases(concurrency int, walkfn func(*release.Release) error) error
-	WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error
-}
-
 type _s3 struct {
 	bucket     string
 	svc        s3iface.S3API
@@ -50,8 +37,8 @@ type _s3 struct {
 	downloader s3manageriface.DownloaderAPI
 }
 
-// New creates a S3 client object.
-func New(sess *session.Session, bucket string) S3 {
+// New creates a StorageAPI client object.
+func New(sess *session.Session, bucket string) StorageAPI {
 	return &_s3{
 		bucket:     strings.TrimPrefix(bucket, "s3://"),
 		svc:        s3.New(sess),
