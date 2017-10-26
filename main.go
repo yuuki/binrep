@@ -203,6 +203,7 @@ pull binary.
 Options:
   --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
+  --max-bandwidth, -bw	max bandwidth for download binaries (Bytes/sec) eg. '1 MB', '1024 KB'
 `
 
 func (cli *CLI) doPull(args []string) error {
@@ -210,6 +211,8 @@ func (cli *CLI) doPull(args []string) error {
 	flags := cli.prepareFlags(pullHelpText)
 	flags.StringVar(&param.Timestamp, "t", "", "")
 	flags.StringVar(&param.Timestamp, "timestamp", "", "")
+	flags.StringVar(&param.MaxBandWidth, "bw", "", "")
+	flags.StringVar(&param.MaxBandWidth, "max-bandwidth", "", "")
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
