@@ -24,6 +24,14 @@ func Pull(param *PullParam, name, installPath string) error {
 	sess := session.New()
 	st := storage.New(sess, param.Endpoint)
 
+	fi, err := os.Stat(installPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to open %q", installPath)
+	}
+	if !fi.IsDir() {
+		return errors.Errorf("%q not directory", installPath)
+	}
+
 	rel, err := st.FindLatestRelease(name)
 	if err != nil {
 		return err
