@@ -63,7 +63,7 @@ func IsChecksumError(err error) bool {
 	return ok
 }
 
-// CopyAndIsValidChecksum copies src to dst and calculate checksum of src, then check it.
+// CopyAndValidateChecksum copies src to dst and calculate checksum of src, then check it.
 func (b *Binary) CopyAndValidateChecksum(dst io.Writer, src io.Reader) (int64, error) {
 	h := sha256.New()
 	w := io.MultiWriter(h, dst)
