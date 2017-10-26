@@ -39,11 +39,7 @@ func Pull(param *PullParam, name, installPath string) error {
 
 	log.Println("-->", "Downloading", rel.URL, "to", installPath)
 
-	if err := pullRelease(rel, installPath); err != nil {
-		return err
-	}
-
-	return nil
+	return pullRelease(rel, installPath)
 }
 
 func pullRelease(rel *release.Release, installPath string) error {
