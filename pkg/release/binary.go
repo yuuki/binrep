@@ -46,19 +46,6 @@ func checksum(r io.Reader) (string, error) {
 	return fmt.Sprintf("%x", sha256.Sum256(body)), nil
 }
 
-// ValidateChecksum validates the correctness of the checksum. Return
-// error If the both of checksum is not the same.
-func (b *Binary) ValidateChecksum(r io.Reader) error {
-	sum, err := checksum(r)
-	if err != nil {
-		return err
-	}
-	if b.Checksum != sum {
-		return errors.Errorf("invalid checksum, got %v, want %v", sum, b.Checksum)
-	}
-	return nil
-}
-
 // InvalidChecksumError represents an error of the checksum.
 type InvalidChecksumError struct {
 	got  string
