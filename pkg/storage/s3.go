@@ -191,6 +191,7 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	return &m, nil
 }
 
+// GetBinaryBody returns the binary body reader.
 func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
 	key := filepath.Join(relURL.Path, binName)
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
