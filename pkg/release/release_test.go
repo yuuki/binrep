@@ -43,10 +43,12 @@ func TestReleaseInspect(t *testing.T) {
 		{
 			Name:     "droot",
 			Checksum: "ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48",
+			Mode:     0755,
 		},
 		{
 			Name:     "grabeni",
 			Checksum: "3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259",
+			Mode:     0755,
 		},
 	})
 
@@ -60,7 +62,7 @@ func TestReleaseInspect(t *testing.T) {
 
 	rel.Inspect(out)
 
-	expected := "NAME\tTIMESTAMP\tBINNARY1\tBINNARY2\t\ngithub.com/yuuki/tools\t20171019204009\tdroot//ec9efb6\tgrabeni//3e30f16\t\n"
+	expected := "NAME\tTIMESTAMP\tBINNARY1\tBINNARY2\t\ngithub.com/yuuki/tools\t20171019204009\tdroot/-rwxr-xr-x/ec9efb6\tgrabeni/-rwxr-xr-x/3e30f16\t\n"
 	if out.String() != expected {
 		t.Errorf("got: %q, want: %q", out.String(), expected)
 	}

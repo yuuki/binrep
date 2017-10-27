@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 )
@@ -15,15 +16,15 @@ const (
 
 // Binary represents the binary file within release.
 type Binary struct {
-	Name     string    `yaml:"name"`
-	Checksum string    `yaml:"checksum"`
-	Version  string    `yaml:"version,omitempty"`
-	Body     io.Reader `yaml:"-"`
+	Name     string      `yaml:"name"`
+	Checksum string      `yaml:"checksum"`
+	Mode     os.FileMode `yaml:"mode"`
+	Body     io.Reader   `yaml:"-"`
 }
 
 // BuildBinary builds a Binary object. Return error if it is failed
 // to calculate checksum of the body.
-func BuildBinary(name string, body io.Reader) (*Binary, error) {
+func BuildBinary(name string, mode os.FileMode, body io.Reader) (*Binary, error) {
 	sum, err := checksum(body)
 	if err != nil {
 		return nil, err
@@ -31,6 +32,7 @@ func BuildBinary(name string, body io.Reader) (*Binary, error) {
 	return &Binary{
 		Name:     name,
 		Checksum: sum,
+		Mode:     mode,
 		Body:     body,
 	}, nil
 }
@@ -86,5 +88,5 @@ func (b *Binary) shortChecksum() string {
 
 // Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
-	fmt.Fprintf(w, "%s/%s/%s\t", b.Name, b.Version, b.shortChecksum())
+	fmt.Fprintf(w, "%s/%s/%s\t", b.Name, b.Mode, b.shortChecksum())
 }
