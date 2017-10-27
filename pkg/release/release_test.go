@@ -60,7 +60,7 @@ func TestReleaseInspect(t *testing.T) {
 
 	rel.Inspect(out)
 
-	expected := "NAME\tTIMESTAMP\tBINNARY1\tBINNARY2\t\ngithub.com/yuuki/tools\t20171019204009\tdroot//ec9efb6\tgrabeni//3e30f16\t\n"
+	expected := "NAME\tTIMESTAMP\tBINNARY1\tBINNARY2\t\ngithub.com/yuuki/tools\t20171019204009\tdroot/ec9efb6\tgrabeni/3e30f16\t\n"
 	if out.String() != expected {
 		t.Errorf("got: %q, want: %q", out.String(), expected)
 	}

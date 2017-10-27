@@ -65,7 +65,7 @@ func TestBinaryInspect(t *testing.T) {
 
 	b.Inspect(w)
 
-	expected := "github.com/yuuki/droot//230d835\t"
+	expected := "github.com/yuuki/droot/230d835\t"
 	if w.String() != expected {
 		t.Errorf("got: %v, want: %v", w.String(), expected)
 	}

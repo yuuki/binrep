@@ -17,7 +17,6 @@ const (
 type Binary struct {
 	Name     string    `yaml:"name"`
 	Checksum string    `yaml:"checksum"`
-	Version  string    `yaml:"version,omitempty"`
 	Body     io.Reader `yaml:"-"`
 }
 
@@ -86,5 +85,5 @@ func (b *Binary) shortChecksum() string {
 
 // Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
-	fmt.Fprintf(w, "%s/%s/%s\t", b.Name, b.Version, b.shortChecksum())
+	fmt.Fprintf(w, "%s/%s\t", b.Name, b.shortChecksum())
 }
