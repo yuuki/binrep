@@ -88,5 +88,5 @@ func (b *Binary) shortChecksum() string {
 
 // Inspect prints the binary information.
 func (b *Binary) Inspect(w io.Writer) {
-	fmt.Fprintf(w, "%s/%s\t", b.Name, b.shortChecksum())
+	fmt.Fprintf(w, "%s/%s/%s\t", b.Name, b.Mode, b.shortChecksum())
 }
