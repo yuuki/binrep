@@ -69,6 +69,25 @@ func (s *_s3) buildReleaseURL(name, timestamp string) (*url.URL, error) {
 	return u, nil
 }
 
+// HaveSameChecksums returns whether each checksum of given binaries is
+// the same or not with each checksum of binaries on the S3.
+func (s *_s3) HaveSameChecksums(name string, bins []*release.Binary) (bool, error) {
+	latestRel, err := s.FindLatestRelease(name)
+	if err != nil {
+		return false, err
+	}
+	for _, lbin := range latestRel.Meta.Binaries {
+		for _, bin := range bins {
+			if bin.Name == lbin.Name {
+				if bin.Checksum != lbin.Checksum {
+					return false, nil
+				}
+			}
+		}
+	}
+	return true, nil
+}
+
 // FindLatestRelease finds the release including the latest timestamp.
 func (s *_s3) FindLatestRelease(name string) (*release.Release, error) {
 	latest, err := s.latestTimestamp(name)
