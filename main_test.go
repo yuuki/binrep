@@ -151,25 +151,6 @@ func TestRun_subCommand(t *testing.T) {
 			expectedStatus: 2,
 			expectedSubOut: "too few or many arguments",
 		},
-		// sync
-		{
-			desc:           "sync: display help",
-			arg:            "binrep sync --help",
-			expectedStatus: 2,
-			expectedSubOut: "Usage: binrep sync",
-		},
-		{
-			desc:           "sync: missing endpoint error",
-			arg:            "binrep sync",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
-			desc:           "sync: arguments error (len: 0)",
-			arg:            "binrep sync --endpoint s3://testing",
-			expectedStatus: 2,
-			expectedSubOut: "too few arguments",
-		},
 	}
 	for _, tc := range tests {
 		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)

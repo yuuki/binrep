@@ -24,7 +24,6 @@ The following features will be supported.
 - Amazon S3 as storage backend
 - directory layout `<host>/<user>/<project>` like `go get` and [ghq](https://github.com/motemen/ghq) do
 - version management like [Capistrano](http://capistranorb.com/)
-- synchronization of all latest binary files from S3 to a local filesystem
 - limitable network bandwidth
 
 The following features will **not** be supported.
@@ -88,19 +87,6 @@ Cleaned up 20171017152626
 $ binrep pull --endpoint s3://binrep-bucket github.com/yuuki/droot /usr/local/bin
 --> Downloading s3://binrep-bucket/github.com/yuuki/binrep/20171019204009 to /usr/local/bin
 ```
-
-### sync
-
-```sh
-$ binrep sync --endpoint s3://binrep-bucket --concurrency 4 --max-bandwidth '10 MB' /opt/binrep/
-Set max bandwidth total: 10 MB/sec, per-release: 2.5 MB/sec
---> Downloading to /opt/binrep/github.com/fujiwara/stretcher/20171014110009/
---> Downloading to /opt/binrep/github.com/motemen/ghq/20171013140424/
---> Downloading to /opt/binrep/github.com/yuuki/droot/20171019204009/
-...
-```
-
-`sync` skips the download if there are already the same timestamp release on local filesystem.
 
 # Directory layout on S3 bucket
 

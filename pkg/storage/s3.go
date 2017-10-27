@@ -313,46 +313,6 @@ func (s *_s3) PruneReleases(name string, keep int) ([]string, error) {
 	return prunedTimestamps, nil
 }
 
-func (s *_s3) walkNames(pool *grpool.Pool, prefix string, walkfn func(name string) error) error {
-	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: aws.String(s.bucket),
-		Prefix: aws.String(prefix),
-	})
-	if err != nil {
-		return errors.Wrapf(err, "failed to list objects (bucket: %v, key: %v/)", s.bucket, prefix)
-	}
-	if *resp.IsTruncated {
-		//TODO: paging
-		log.Printf("too many objects (bucket: %v, key: %v/)\n", s.bucket, prefix)
-	}
-
-	var foundErr error // just use nonzeo exit
-	for _, obj := range resp.Contents {
-		if ok, name := release.ParseName(*obj.Key); ok {
-			name := name
-			pool.WaitCount(1)
-			pool.JobQueue <- func() {
-				defer pool.JobDone()
-				if err := walkfn(name); err != nil {
-					log.Printf("failed to walk %s: %s\n", name, err)
-					// just put error log, not to exit
-					foundErr = err
-				}
-			}
-			continue
-		}
-		nextPrefix := filepath.Join(prefix, *obj.Key)
-		if err := s.walkNames(pool, nextPrefix, walkfn); err != nil {
-			return err
-		}
-	}
-	pool.WaitAll()
-	if foundErr != nil {
-		return foundErr
-	}
-	return nil
-}
-
 func (s *_s3) walkReleases(pool *grpool.Pool, prefix string, walkfn func(*release.Release) error) error {
 	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket:    aws.String(s.bucket),
@@ -407,24 +367,6 @@ func (s *_s3) WalkReleases(concurrency int, releaseFn func(*release.Release) err
 	defer pool.Release()
 
 	err := s.walkReleases(pool, "", func(rel *release.Release) error {
-		return releaseFn(rel)
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// WalkLatestReleases walks the latest releases.
-func (s *_s3) WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error {
-	pool := grpool.NewPool(concurrency, jobQueueLen)
-	defer pool.Release()
-
-	err := s.walkNames(pool, "", func(name string) error {
-		rel, err := s.FindLatestRelease(name)
-		if err != nil {
-			return err
-		}
 		return releaseFn(rel)
 	})
 	if err != nil {

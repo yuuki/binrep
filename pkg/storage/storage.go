@@ -14,5 +14,4 @@ type API interface {
 	DeleteRelease(name, timestamp string) error
 	PruneReleases(name string, keep int) ([]string, error)
 	WalkReleases(concurrency int, walkfn func(*release.Release) error) error
-	WalkLatestReleases(concurrency int, releaseFn func(*release.Release) error) error
 }
