@@ -6,7 +6,7 @@ if [[ $(git status -s) != "" ]]; then
     exit 1
 fi
 
-current_version=$(gobump show | jq -rM '.Version')
+current_version=$(gobump show -r)
 
 echo "current version: $current_version"
 read -p "input next version: " next_version
