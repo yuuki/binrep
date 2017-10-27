@@ -11,7 +11,7 @@ import (
 
 func TestBuildBinary(t *testing.T) {
 	body := new(bytes.Buffer)
-	got, err := BuildBinary("github.com/yuuki/droot", body)
+	got, err := BuildBinary("github.com/yuuki/droot", 0755, body)
 	if err != nil {
 		t.Fatalf("should not raise error: %s", err)
 	}
@@ -25,6 +25,10 @@ func TestBuildBinary(t *testing.T) {
 	if got.Checksum != expectedChecksum {
 		t.Errorf("Binary.Checksum = %q; want %q", got.Checksum, expectedChecksum)
 	}
+	var expectedMode os.FileMode = 0755
+	if got.Mode != expectedMode {
+		t.Errorf("Binary.Name = %q; want %q", got.Mode, expectedMode)
+	}
 
 	if got.Body != body {
 		t.Errorf("Binary.Body = %v; want %v", got.Body, body)
@@ -33,7 +37,7 @@ func TestBuildBinary(t *testing.T) {
 
 func TestBuildBinary_errorChecksumNil(t *testing.T) {
 	var body io.Reader
-	_, err := BuildBinary("github.com/yuuki/droot", body)
+	_, err := BuildBinary("github.com/yuuki/droot", 0755, body)
 	if fmt.Sprintf("%s", err) != "try to read nil" {
 		t.Fatalf("err = %q; want %q", err, "try to read nil")
 	}
@@ -49,7 +53,7 @@ func TestBuildBinary_errorChecksumClosedFile(t *testing.T) {
 		panic(err)
 	}
 
-	_, err = BuildBinary("github.com/yuuki/droot", tmpfile)
+	_, err = BuildBinary("github.com/yuuki/droot", 0755, tmpfile)
 
 	if fmt.Sprintf("%s", err) != "failed to read data for checksum" {
 		t.Fatalf("err = %q; want %q", err, "failed to read data for checksum")
@@ -57,7 +61,7 @@ func TestBuildBinary_errorChecksumClosedFile(t *testing.T) {
 }
 
 func TestBinaryInspect(t *testing.T) {
-	b, err := BuildBinary("github.com/yuuki/droot", bytes.NewBufferString("body"))
+	b, err := BuildBinary("github.com/yuuki/droot", 0755, bytes.NewBufferString("body"))
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +69,7 @@ func TestBinaryInspect(t *testing.T) {
 
 	b.Inspect(w)
 
-	expected := "github.com/yuuki/droot/230d835\t"
+	expected := "github.com/yuuki/droot/-rwxr-xr-x/230d835\t"
 	if w.String() != expected {
 		t.Errorf("got: %v, want: %v", w.String(), expected)
 	}
