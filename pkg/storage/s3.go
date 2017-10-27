@@ -124,7 +124,7 @@ func (s *_s3) CreateRelease(name string, bins []*release.Binary) (*release.Relea
 	if err != nil {
 		return nil, err
 	}
-	meta, err := s.CreateMeta(u, bins)
+	meta, err := s.createMeta(u, bins)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +152,8 @@ func (s *_s3) latestTimestamp(name string) (string, error) {
 	return timestamps[len(timestamps)-1], nil
 }
 
-// CreateMeta creates the meta.yml on S3.
-func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
+// createMeta creates the meta.yml on S3.
+func (s *_s3) createMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
 	m := release.NewMeta(bins)
 	data, err := yaml.Marshal(m)
 	if err != nil {
