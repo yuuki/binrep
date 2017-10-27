@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"io"
-
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
@@ -16,11 +14,8 @@ type fakeS3API struct {
 }
 
 type fakeS3UploaderAPI struct {
+	s3UploaderAPI
 	FakeUpload func(*s3manager.UploadInput, ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error)
-}
-
-type fakeS3DownloaderAPI struct {
-	FakeDownload func(io.WriterAt, *s3.GetObjectInput, ...func(*s3manager.Downloader)) (int64, error)
 }
 
 // GetObject fakes S3 GetObject.
@@ -46,9 +41,4 @@ func (s *fakeS3API) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObjectO
 // Upload fakes S3 Upload.
 func (u *fakeS3UploaderAPI) Upload(input *s3manager.UploadInput, fn ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
 	return u.FakeUpload(input, fn...)
-}
-
-// Download fakes S3 Download.
-func (d *fakeS3DownloaderAPI) Download(w io.WriterAt, input *s3.GetObjectInput, fn ...func(*s3manager.Downloader)) (int64, error) {
-	return d.FakeDownload(w, input, fn...)
 }

@@ -38,24 +38,18 @@ type s3UploaderAPI interface {
 	Upload(*s3manager.UploadInput, ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error)
 }
 
-type s3DownloaderAPI interface {
-	Download(io.WriterAt, *s3.GetObjectInput, ...func(*s3manager.Downloader)) (int64, error)
-}
-
 type _s3 struct {
-	bucket     string
-	svc        s3API
-	uploader   s3UploaderAPI
-	downloader s3DownloaderAPI
+	bucket   string
+	svc      s3API
+	uploader s3UploaderAPI
 }
 
 // New creates a StorageAPI client object.
 func New(sess *session.Session, bucket string) API {
 	return &_s3{
-		bucket:     strings.TrimPrefix(bucket, "s3://"),
-		svc:        s3.New(sess),
-		uploader:   s3manager.NewUploader(sess),
-		downloader: s3manager.NewDownloader(sess),
+		bucket:   strings.TrimPrefix(bucket, "s3://"),
+		svc:      s3.New(sess),
+		uploader: s3manager.NewUploader(sess),
 	}
 }
 
