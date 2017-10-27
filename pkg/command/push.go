@@ -17,6 +17,7 @@ import (
 type PushParam struct {
 	Timestamp    string
 	KeepReleases int
+	Force        bool
 	Endpoint     string
 }
 
@@ -39,6 +40,17 @@ func Push(param *PushParam, name string, binPaths []string) error {
 
 	sess := session.New()
 	st := storage.New(sess, param.Endpoint)
+
+	if !param.Force {
+		ok, err := st.HaveSameChecksums(name, bins)
+		if err != nil {
+			return err
+		}
+		if ok {
+			log.Println("Skip pushing the binaries because they have the same checksum with the latest binaries on the remote storage")
+			return nil
+		}
+	}
 
 	rel, err := st.CreateRelease(name, bins)
 	if err != nil {

@@ -169,6 +169,7 @@ Options:
   --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
   --keep-releases, -k	the number of releases that it keeps (default: 5)
+  --force, -f		always push even if each checksum of binaries is the same with each one on remote storage (default: false)
 `
 
 func (cli *CLI) doPush(args []string) error {
@@ -178,6 +179,8 @@ func (cli *CLI) doPush(args []string) error {
 	flags.StringVar(&param.Timestamp, "timestamp", "", "")
 	flags.IntVar(&param.KeepReleases, "k", defaultKeepReleases, "")
 	flags.IntVar(&param.KeepReleases, "keep-releases", defaultKeepReleases, "")
+	flags.BoolVar(&param.Force, "f", false, "")
+	flags.BoolVar(&param.Force, "force", false, "")
 	flags.StringVar(&param.Endpoint, "e", "", "")
 	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
