@@ -30,8 +30,11 @@ func Push(param *PushParam, name string, binPaths []string) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to open %v", binPath)
 		}
-
-		bin, err := release.BuildBinary(filepath.Base(file.Name()), file)
+		fi, err := file.Stat()
+		if err != nil {
+			return errors.Wrapf(err, "failed to stat %q", file.Name())
+		}
+		bin, err := release.BuildBinary(filepath.Base(file.Name()), fi.Mode(), file)
 		if err != nil {
 			return err
 		}

@@ -56,7 +56,7 @@ func Pull(param *PullParam, name, installPath string) error {
 func pullRelease(rel *release.Release, installPath string, maxBandWidth uint64) error {
 	for _, bin := range rel.Meta.Binaries {
 		path := filepath.Join(installPath, bin.Name)
-		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, bin.Mode)
 		if err != nil {
 			return errors.Wrapf(err, "failed to open %v", path)
 		}
