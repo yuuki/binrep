@@ -21,6 +21,19 @@ func newTestS3(svc s3API, uploader s3UploaderAPI) *_s3 {
 	}
 }
 
+func TestBuildReleaseURL(t *testing.T) {
+	store := newTestS3(&fakeS3API{}, &fakeS3UploaderAPI{})
+
+	u, err := store.buildReleaseURL("github.com/yuuki/droot", "20171016152508")
+	if err != nil {
+		panic(err)
+	}
+
+	if u.String() != "s3://binrep-testing/github.com/yuuki/droot/20171016152508" {
+		t.Errorf("got %q, want %q", u.String(), "github.com/yuuki/droot/20171016152508")
+	}
+}
+
 func TestS3LatestTimestamp(t *testing.T) {
 	fakeS3 := &fakeS3API{
 		FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
