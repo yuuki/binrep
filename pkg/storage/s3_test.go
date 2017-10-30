@@ -2,12 +2,14 @@ package storage
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/yuuki/binrep/pkg/release"
@@ -199,4 +201,103 @@ binaries:
 	if diff := pretty.Compare(meta.Binaries, expected); diff != "" {
 		t.Errorf("diff: (-actual +expected)\n%s", diff)
 	}
+}
+
+func TestS3FindLatestRelease(t *testing.T) {
+	t.Run("normal", func(t *testing.T) {
+		getObjectCallCnt := 0
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				if *input.Prefix != "github.com/yuuki/droot/" {
+					t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+				}
+				return &s3.ListObjectsV2Output{
+					CommonPrefixes: []*s3.CommonPrefix{
+						{Prefix: aws.String("github.com/yuuki/droot/20171016152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171017152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171015152508")},
+					},
+				}, nil
+			},
+			FakeGetObject: func(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+				getObjectCallCnt++
+				switch getObjectCallCnt {
+				case 1:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/meta.yml"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString(strings.TrimPrefix(`
+binaries:
+- name: droot
+  checksum: ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48
+  mode: 493
+`, "\n"))),
+					}
+					return resp, nil
+				case 2:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/droot"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString("droot-body")),
+					}
+					return resp, nil
+				}
+				return nil, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		rel, err := store.FindLatestRelease("github.com/yuuki/droot")
+
+		if err != nil {
+			t.Fatalf("should not raise error: %s", err)
+		}
+
+		if rel.Name() != "github.com/yuuki/droot" {
+			t.Errorf("got: %q, want %q", rel.Name(), "github.com/yuuki/droot")
+		}
+		if rel.Timestamp() != "20171017152508" {
+			t.Errorf("got: %q, want %q", rel.Name(), "20171017152508")
+		}
+	})
+
+	t.Run("meta.yml not found", func(t *testing.T) {
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				if *input.Prefix != "github.com/yuuki/droot/" {
+					t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+				}
+				return &s3.ListObjectsV2Output{
+					CommonPrefixes: []*s3.CommonPrefix{
+						{Prefix: aws.String("github.com/yuuki/droot/20171016152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171017152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171015152508")},
+					},
+				}, nil
+			},
+			FakeGetObject: func(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+				return nil, awserr.New("NoSuchKey", "", nil)
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		_, err := store.FindLatestRelease("github.com/yuuki/droot")
+
+		if err == nil {
+			t.Fatal("should raise error")
+		}
+		if !strings.Contains(fmt.Sprintf("%s", err), "meta.yml not found") {
+			t.Errorf("error got: %q, want: %q", err, "meta.yml not found")
+		}
+	})
 }
