@@ -195,7 +195,7 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
 	for _, b := range m.Binaries {
-		b.Body, err = s.GetBinaryBody(u, b.Name)
+		b.Body, err = s.getBinaryBody(u, b.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -203,8 +203,8 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	return &m, nil
 }
 
-// GetBinaryBody returns the binary body reader.
-func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
+// getBinaryBody returns the binary body reader.
+func (s *_s3) getBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
 	key := filepath.Join(relURL.Path, binName)
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),

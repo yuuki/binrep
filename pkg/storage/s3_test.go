@@ -124,3 +124,79 @@ binaries:
 		t.Errorf("diff: (-actual +expected)\n%s", diff)
 	}
 }
+
+func TestS3FindMeta(t *testing.T) {
+	callCnt := 0
+	fakeS3 := &fakeS3API{
+		FakeGetObject: func(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+			callCnt++
+			switch callCnt {
+			case 1:
+				expectedKey := "/github.com/yuuki/droot/20171017152508/meta.yml"
+				if *input.Key != expectedKey {
+					t.Errorf("got %q, want %q", *input.Key, expectedKey)
+				}
+				resp := &s3.GetObjectOutput{
+					Body: ioutil.NopCloser(bytes.NewBufferString(strings.TrimPrefix(`
+binaries:
+- name: droot
+  checksum: ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48
+  mode: 493
+- name: grabeni
+  checksum: 3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259
+  mode: 493
+`, "\n"))),
+				}
+				return resp, nil
+			case 2:
+				expectedKey := "/github.com/yuuki/droot/20171017152508/droot"
+				if *input.Key != expectedKey {
+					t.Errorf("got %q, want %q", *input.Key, expectedKey)
+				}
+				resp := &s3.GetObjectOutput{
+					Body: ioutil.NopCloser(bytes.NewBufferString("droot-body")),
+				}
+				return resp, nil
+			case 3:
+				expectedKey := "/github.com/yuuki/droot/20171017152508/grabeni"
+				if *input.Key != expectedKey {
+					t.Errorf("got %q, want %q", *input.Key, expectedKey)
+				}
+				resp := &s3.GetObjectOutput{
+					Body: ioutil.NopCloser(bytes.NewBufferString("grabeni-body")),
+				}
+				return resp, nil
+			}
+			return nil, nil
+		},
+	}
+	store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+	u, err := url.Parse("s3://binrep-testing/github.com/yuuki/droot/20171017152508")
+	if err != nil {
+		panic(err)
+	}
+
+	meta, err := store.FindMeta(u)
+
+	if err != nil {
+		t.Fatalf("should not raise error: %s", err)
+	}
+
+	expected := []*release.Binary{
+		{
+			Name:     "droot",
+			Checksum: "ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48",
+			Mode:     0755,
+			Body:     ioutil.NopCloser(bytes.NewBufferString("droot-body")),
+		},
+		{
+			Name:     "grabeni",
+			Checksum: "3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259",
+			Mode:     0755,
+			Body:     ioutil.NopCloser(bytes.NewBufferString("grabeni-body")),
+		},
+	}
+	if diff := pretty.Compare(meta.Binaries, expected); diff != "" {
+		t.Errorf("diff: (-actual +expected)\n%s", diff)
+	}
+}
