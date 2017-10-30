@@ -119,8 +119,8 @@ func (s *_s3) FindReleaseByTimestamp(name, timestamp string) (*release.Release, 
 }
 
 // CreateRelease creates the release on S3.
-func (s *_s3) CreateRelease(name string, bins []*release.Binary) (*release.Release, error) {
-	u, err := s.buildReleaseURL(name, release.Now())
+func (s *_s3) CreateRelease(name string, timestamp string, bins []*release.Binary) (*release.Release, error) {
+	u, err := s.buildReleaseURL(name, timestamp)
 	if err != nil {
 		return nil, err
 	}

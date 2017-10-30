@@ -55,7 +55,7 @@ func Push(param *PushParam, name string, binPaths []string) error {
 		}
 	}
 
-	rel, err := st.CreateRelease(name, bins)
+	rel, err := st.CreateRelease(name, release.Now(), bins)
 	if err != nil {
 		return err
 	}
