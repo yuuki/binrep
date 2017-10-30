@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/yuuki/binrep/pkg/release"
 )
@@ -19,7 +20,7 @@ func newTestS3(svc s3API, uploader s3UploaderAPI) *_s3 {
 	return &_s3{
 		bucket:   "binrep-testing",
 		svc:      svc,
-		uploader: nil,
+		uploader: uploader,
 	}
 }
 
@@ -391,7 +392,34 @@ binaries:
 			return &s3.PutObjectOutput{}, nil
 		},
 	}
-	store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+	callCnt := 0
+	fakeS3Uploader := &fakeS3UploaderAPI{
+		FakeUpload: func(input *s3manager.UploadInput, fn ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
+			callCnt++
+			switch callCnt {
+			case 1:
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				expectedKey := "/github.com/yuuki/droot/20171017152508/droot"
+				if *input.Key != expectedKey {
+					t.Errorf("got %q, want %q", *input.Key, expectedKey)
+				}
+				return &s3manager.UploadOutput{}, nil
+			case 2:
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				expectedKey := "/github.com/yuuki/droot/20171017152508/grabeni"
+				if *input.Key != expectedKey {
+					t.Errorf("got %q, want %q", *input.Key, expectedKey)
+				}
+				return &s3manager.UploadOutput{}, nil
+			}
+			return nil, nil
+		},
+	}
+	store := newTestS3(fakeS3, fakeS3Uploader)
 	bins := []*release.Binary{
 		{
 			Name:     "droot",

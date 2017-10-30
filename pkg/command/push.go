@@ -55,14 +55,10 @@ func Push(param *PushParam, name string, binPaths []string) error {
 		}
 	}
 
+	log.Println("-->", "Uploading", binPaths)
+
 	rel, err := st.CreateRelease(name, release.Now(), bins)
 	if err != nil {
-		return err
-	}
-
-	log.Println("-->", "Uploading", binPaths, "to", rel.URL)
-
-	if err := st.PushRelease(rel); err != nil {
 		return err
 	}
 
