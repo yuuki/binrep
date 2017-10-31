@@ -37,6 +37,176 @@ func TestBuildReleaseURL(t *testing.T) {
 	}
 }
 
+func TestS3HaveSameChecksums(t *testing.T) {
+	fakeListObjects := func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+		if *input.Bucket != "binrep-testing" {
+			t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+		}
+		if *input.Prefix != "github.com/yuuki/droot/" {
+			t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+		}
+		return &s3.ListObjectsV2Output{
+			CommonPrefixes: []*s3.CommonPrefix{
+				{Prefix: aws.String("github.com/yuuki/droot/20171016152508")},
+				{Prefix: aws.String("github.com/yuuki/droot/20171017152508")},
+				{Prefix: aws.String("github.com/yuuki/droot/20171015152508")},
+			},
+		}, nil
+	}
+
+	t.Run("checksum correct", func(t *testing.T) {
+		getObjectCallCnt := 0
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				return fakeListObjects(input)
+			},
+			FakeGetObject: func(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+				getObjectCallCnt++
+				switch getObjectCallCnt {
+				case 1:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/meta.yml"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString(strings.TrimPrefix(`
+binaries:
+- name: droot
+  checksum: ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48
+  mode: 493
+- name: grabeni
+  checksum: 3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259
+  mode: 493
+`, "\n"))),
+					}
+					return resp, nil
+				case 2:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/droot"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString("droot-body")),
+					}
+					return resp, nil
+				case 3:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/grabeni"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString("grabeni-body")),
+					}
+					return resp, nil
+				}
+				return nil, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		bins := []*release.Binary{
+			{
+				Name:     "droot",
+				Checksum: "ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48",
+				Mode:     0755,
+				Body:     bytes.NewBufferString("droot-body"),
+			},
+			{
+				Name:     "grabeni",
+				Checksum: "3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259",
+				Mode:     0755,
+				Body:     bytes.NewBufferString("grabeni-body"),
+			},
+		}
+
+		ok, err := store.HaveSameChecksums("github.com/yuuki/droot", bins)
+
+		if err != nil {
+			t.Fatalf("should not raise error: %s", err)
+		}
+
+		if ok != true {
+			t.Error("github.com/yuuki/droot checksum should be correct")
+		}
+	})
+
+	t.Run("checksum error", func(t *testing.T) {
+		getObjectCallCnt := 0
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				return fakeListObjects(input)
+			},
+			FakeGetObject: func(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+				getObjectCallCnt++
+				switch getObjectCallCnt {
+				case 1:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/meta.yml"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString(strings.TrimPrefix(`
+binaries:
+- name: droot
+  checksum: 0000000009e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2000000
+  mode: 493
+- name: grabeni
+  checksum: 3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259
+  mode: 493
+`, "\n"))),
+					}
+					return resp, nil
+				case 2:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/droot"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString("droot-body")),
+					}
+					return resp, nil
+				case 3:
+					expectedKey := "/github.com/yuuki/droot/20171017152508/grabeni"
+					if *input.Key != expectedKey {
+						t.Errorf("got %q, want %q", *input.Key, expectedKey)
+					}
+					resp := &s3.GetObjectOutput{
+						Body: ioutil.NopCloser(bytes.NewBufferString("grabeni-body")),
+					}
+					return resp, nil
+				}
+				return nil, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		bins := []*release.Binary{
+			{
+				Name:     "droot",
+				Checksum: "ec9efb6249e0e4797bde75afbfe962e0db81c530b5bb1cfd2cbe0e2fc2c8cf48",
+				Mode:     0755,
+				Body:     bytes.NewBufferString("droot-body"),
+			},
+			{
+				Name:     "grabeni",
+				Checksum: "3e30f16f0ec41ab92ceca57a527efff18b6bacabd12a842afda07b8329e32259",
+				Mode:     0755,
+				Body:     bytes.NewBufferString("grabeni-body"),
+			},
+		}
+
+		ok, err := store.HaveSameChecksums("github.com/yuuki/droot", bins)
+
+		if err != nil {
+			t.Fatalf("should not raise error: %s", err)
+		}
+
+		if ok != false {
+			t.Error("github.com/yuuki/droot checksum should be error")
+		}
+	})
+}
+
 func TestS3LatestTimestamp(t *testing.T) {
 	fakeS3 := &fakeS3API{
 		FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
