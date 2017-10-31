@@ -621,3 +621,64 @@ binaries:
 		t.Errorf("diff: (-actual +expected)\n%s", diff)
 	}
 }
+
+func TestS3ascTimestamps(t *testing.T) {
+	t.Run("normal", func(t *testing.T) {
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				if *input.Prefix != "github.com/yuuki/droot/" {
+					t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+				}
+				return &s3.ListObjectsV2Output{
+					CommonPrefixes: []*s3.CommonPrefix{
+						{Prefix: aws.String("github.com/yuuki/droot/20171016152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171017152508")},
+						{Prefix: aws.String("github.com/yuuki/droot/20171015152508")},
+					},
+				}, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		timestamps, err := store.ascTimestamps("github.com/yuuki/droot")
+
+		if err != nil {
+			t.Fatalf("should not raise error: %s", err)
+		}
+
+		expected := []string{
+			"20171015152508",
+			"20171016152508",
+			"20171017152508",
+		}
+		if diff := pretty.Compare(timestamps, expected); diff != "" {
+			t.Errorf("diff: (-actual +expected)\n%s", diff)
+		}
+	})
+	t.Run("zero length error", func(t *testing.T) {
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				if *input.Prefix != "github.com/yuuki/droot/" {
+					t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+				}
+				return &s3.ListObjectsV2Output{CommonPrefixes: []*s3.CommonPrefix{}}, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		_, err := store.ascTimestamps("github.com/yuuki/droot")
+
+		if err == nil {
+			t.Fatalf("should raise error: %s", err)
+		}
+		if !strings.Contains(err.Error(), "no such projects") {
+			t.Errorf("got: %q, want: %q", err.Error(), "no such projects")
+		}
+	})
+}
