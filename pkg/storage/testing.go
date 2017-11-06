@@ -7,6 +7,7 @@ import (
 	"github.com/yuuki/binrep/pkg/release"
 )
 
+// TestStorageAPI defines the interface for stub testing storage.API.
 type TestStorageAPI interface {
 	API
 	latestTimestamp(name string) (string, error)
