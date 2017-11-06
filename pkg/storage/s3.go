@@ -119,14 +119,24 @@ func (s *_s3) FindReleaseByTimestamp(name, timestamp string) (*release.Release, 
 }
 
 // CreateRelease creates the release on S3.
-func (s *_s3) CreateRelease(name string, bins []*release.Binary) (*release.Release, error) {
-	u, err := s.buildReleaseURL(name, release.Now())
+func (s *_s3) CreateRelease(name string, timestamp string, bins []*release.Binary) (*release.Release, error) {
+	u, err := s.buildReleaseURL(name, timestamp)
 	if err != nil {
 		return nil, err
 	}
-	meta, err := s.CreateMeta(u, bins)
+	meta, err := s.createMeta(u, bins)
 	if err != nil {
 		return nil, err
+	}
+	for _, bin := range meta.Binaries {
+		_, err := s.uploader.Upload(&s3manager.UploadInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(filepath.Join(u.Path, bin.Name)),
+			Body:   bin.Body,
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to upload file to %s", u)
+		}
 	}
 	return release.New(meta, u), nil
 }
@@ -152,8 +162,8 @@ func (s *_s3) latestTimestamp(name string) (string, error) {
 	return timestamps[len(timestamps)-1], nil
 }
 
-// CreateMeta creates the meta.yml on S3.
-func (s *_s3) CreateMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
+// createMeta creates the meta.yml on S3.
+func (s *_s3) createMeta(u *url.URL, bins []*release.Binary) (*release.Meta, error) {
 	m := release.NewMeta(bins)
 	data, err := yaml.Marshal(m)
 	if err != nil {
@@ -195,7 +205,7 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 		return nil, errors.Wrapf(err, "failed to read meta.yml on s3")
 	}
 	for _, b := range m.Binaries {
-		b.Body, err = s.GetBinaryBody(u, b.Name)
+		b.Body, err = s.getBinaryBody(u, b.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -203,8 +213,8 @@ func (s *_s3) FindMeta(u *url.URL) (*release.Meta, error) {
 	return &m, nil
 }
 
-// GetBinaryBody returns the binary body reader.
-func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
+// getBinaryBody returns the binary body reader.
+func (s *_s3) getBinaryBody(relURL *url.URL, binName string) (io.Reader, error) {
 	key := filepath.Join(relURL.Path, binName)
 	resp, err := s.svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
@@ -221,21 +231,6 @@ func (s *_s3) GetBinaryBody(relURL *url.URL, binName string) (io.Reader, error) 
 		return nil, errors.Wrapf(err, "failed to get object from s3 %s", relURL)
 	}
 	return resp.Body, nil
-}
-
-// PushRelease pushes the release into S3.
-func (s *_s3) PushRelease(rel *release.Release) error {
-	for _, bin := range rel.Meta.Binaries {
-		_, err := s.uploader.Upload(&s3manager.UploadInput{
-			Bucket: aws.String(s.bucket),
-			Key:    aws.String(filepath.Join(rel.URL.Path, bin.Name)),
-			Body:   bin.Body,
-		})
-		if err != nil {
-			return errors.Wrapf(err, "failed to upload file to %s", rel.URL)
-		}
-	}
-	return nil
 }
 
 func (s *_s3) ascTimestamps(name string) ([]string, error) {
