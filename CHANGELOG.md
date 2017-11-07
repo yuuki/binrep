@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.6.1](https://github.com/yuuki/binrep/compare/v0.6.0...v0.6.1) (2017-11-07)
+
+
 ## [v0.6.0](https://github.com/yuuki/binrep/compare/v0.5.1...v0.6.0) (2017-11-06)
 
 * S3 unit testing [#10](https://github.com/yuuki/binrep/pull/10) ([yuuki](https://github.com/yuuki))

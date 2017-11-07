@@ -4,7 +4,7 @@ package main
 const name = "binrep"
 
 // version is application version
-const version string = "0.6.0"
+const version string = "0.6.1"
 
 // commit describes latest git commit hash.
 // This is automatically extracted by git describe --always.
