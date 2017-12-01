@@ -28,7 +28,7 @@ for repo in $(dep status -json | jq -rM '.[].ProjectRoot'); do
     echo '=========================================================================================='
     echo "= vendor/${repo} licensed under: ="
     echo "https://${repo}/"
-    for lic in $(find vendor/${repo} -xdev -follow -type f -maxdepth 1 "${find_names[@]}"); do
+    for lic in $(find vendor/${repo} -xdev -follow -maxdepth 1 -type f "${find_names[@]}"); do
         echo
         cat "${lic}"
         echo
