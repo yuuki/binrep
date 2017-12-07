@@ -84,7 +84,7 @@ Commands:
   pull		pull binary.
 
 Options:
-  --version, -v		print version
+  --version             print version
   --help, -h            print help
 `
 
