@@ -45,13 +45,19 @@ func Push(param *PushParam, name string, binPaths []string) error {
 	st := storage.New(sess, param.Endpoint)
 
 	if !param.Force {
-		ok, err := st.HaveSameChecksums(name, bins)
+		ok, err := st.ExistRelease(name)
 		if err != nil {
 			return err
 		}
 		if ok {
-			log.Println("Skip pushing the binaries because they have the same checksum with the latest binaries on the remote storage")
-			return nil
+			ok, err := st.HaveSameChecksums(name, bins)
+			if err != nil {
+				return err
+			}
+			if ok {
+				log.Println("Skip pushing the binaries because they have the same checksum with the latest binaries on the remote storage")
+				return nil
+			}
 		}
 	}
 

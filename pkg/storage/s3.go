@@ -63,6 +63,23 @@ func (s *_s3) buildReleaseURL(name, timestamp string) (*url.URL, error) {
 	return u, nil
 }
 
+// ExistRelease returns whether the name exists or not.
+func (s *_s3) ExistRelease(name string) (bool, error) {
+	resp, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket:    aws.String(s.bucket),
+		Prefix:    aws.String(name + "/"),
+		Delimiter: aws.String("/"),
+	})
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to list objects (bucket: %v, path: %v/)", s.bucket, name)
+	}
+	if len(resp.CommonPrefixes) < 1 {
+		// not found name
+		return false, nil
+	}
+	return true, nil
+}
+
 // HaveSameChecksums returns whether each checksum of given binaries is
 // the same or not with each checksum of binaries on the S3.
 func (s *_s3) HaveSameChecksums(name string, bins []*release.Binary) (bool, error) {
