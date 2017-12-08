@@ -69,6 +69,32 @@ func TestS3ExistRelease(t *testing.T) {
 		}
 	})
 
+	t.Run("not found", func(t *testing.T) {
+		fakeS3 := &fakeS3API{
+			FakeListObjectsV2: func(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+				if *input.Bucket != "binrep-testing" {
+					t.Errorf("got %q, want %q", *input.Bucket, "binrep-testing")
+				}
+				if *input.Prefix != "github.com/yuuki/droot/" {
+					t.Errorf("got %q, want %q", *input.Prefix, "github.com/yuuki/droot/")
+				}
+				return &s3.ListObjectsV2Output{
+					CommonPrefixes: []*s3.CommonPrefix{},
+				}, nil
+			},
+		}
+		store := newTestS3(fakeS3, &fakeS3UploaderAPI{})
+
+		ok, err := store.ExistRelease("github.com/yuuki/droot")
+
+		if err != nil {
+			t.Fatalf("should not raise error: %s", err)
+		}
+
+		if ok != false {
+			t.Error("github.com/yuuki/droot should be not found")
+		}
+	})
 }
 
 func TestS3HaveSameChecksums(t *testing.T) {
