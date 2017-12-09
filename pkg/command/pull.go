@@ -16,7 +16,6 @@ import (
 
 // PullParam represents the option parameter of `pull`.
 type PullParam struct {
-	Endpoint     string
 	BinName      string
 	Timestamp    string
 	MaxBandWidth string
@@ -25,7 +24,7 @@ type PullParam struct {
 // Pull pulls the latest release of the name(<host>/<user>/<project>) to installPath.
 func Pull(param *PullParam, name, installPath string) error {
 	sess := session.New()
-	st := storage.New(sess, param.Endpoint)
+	st := storage.New(sess)
 
 	fi, err := os.Stat(installPath)
 	if err != nil {

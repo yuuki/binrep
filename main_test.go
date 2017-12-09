@@ -3,11 +3,18 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/yuuki/binrep/pkg/config"
 )
 
 func TestRun_global(t *testing.T) {
+	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", "s3://binrep-testing"); err != nil {
+		panic(err)
+	}
+
 	tests := []struct {
 		desc           string
 		arg            string
@@ -33,6 +40,12 @@ func TestRun_global(t *testing.T) {
 			expectedStatus: 0,
 			expectedSubOut: "= Binrep licensed under: =",
 		},
+		{
+			desc:           "help flag",
+			arg:            "binrep --help",
+			expectedStatus: 0,
+			expectedSubErr: "Usage: binrep",
+		},
 	}
 	for _, tc := range tests {
 		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
@@ -53,7 +66,64 @@ func TestRun_global(t *testing.T) {
 	}
 }
 
+func TestRun_endpoint(t *testing.T) {
+	// Clear endpoint
+	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", ""); err != nil {
+		panic(err)
+	}
+
+	tests := []struct {
+		desc           string
+		arg            string
+		expectedStatus int
+		expectedSubOut string
+		expectedSubErr string
+	}{
+		{
+			desc:           "--endpoint",
+			arg:            "binrep --endpoint s3://binrep-testing",
+			expectedStatus: 1,
+			expectedSubErr: "Usage: binrep",
+		},
+		{
+			desc:           "no endpoint value",
+			arg:            "binrep --endpoint",
+			expectedStatus: 1,
+			expectedSubErr: "want --endpoint value",
+		},
+		{
+			desc:           "endpoint required error",
+			arg:            "binrep list",
+			expectedStatus: 2,
+			expectedSubErr: "BackendEndpoint required",
+		},
+	}
+	for _, tc := range tests {
+		config.Config.BackendEndpoint = ""
+
+		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
+		cli := &CLI{outStream: outStream, errStream: errStream}
+		args := strings.Split(tc.arg, " ")
+
+		status := cli.Run(args)
+		if status != tc.expectedStatus {
+			t.Errorf("desc: %q, status should be %v, not %v", tc.desc, tc.expectedStatus, status)
+		}
+
+		if !strings.Contains(outStream.String(), tc.expectedSubOut) {
+			t.Errorf("desc: %q, subout should contain %q, got %q", tc.desc, tc.expectedSubOut, outStream.String())
+		}
+		if !strings.Contains(errStream.String(), tc.expectedSubErr) {
+			t.Errorf("desc: %q, subout should contain %q, got %q", tc.desc, tc.expectedSubErr, errStream.String())
+		}
+	}
+}
+
 func TestRun_subCommand(t *testing.T) {
+	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", "s3://binrep-testing"); err != nil {
+		panic(err)
+	}
+
 	tests := []struct {
 		desc           string
 		arg            string
@@ -68,14 +138,8 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep list",
 		},
 		{
-			desc:           "list: missing endpoint error",
-			arg:            "binrep list",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "list: extra arguments error",
-			arg:            "binrep list --endpoint s3://testing hoge",
+			arg:            "binrep list hoge",
 			expectedStatus: 2,
 			expectedSubOut: "extra arguments",
 		},
@@ -88,14 +152,8 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep show",
 		},
 		{
-			desc:           "show: missing endpoint error",
-			arg:            "binrep show",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "show: arguments error",
-			arg:            "binrep show --endpoint s3://testing",
+			arg:            "binrep show",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
@@ -108,20 +166,14 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep push",
 		},
 		{
-			desc:           "push: missing endpoint error",
-			arg:            "binrep push",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "push: arguments error (len: 0)",
-			arg:            "binrep push --endpoint s3://testing",
+			arg:            "binrep push",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
 		{
 			desc:           "push: arguments error (len: 1)",
-			arg:            "binrep push --endpoint s3://testing hoge",
+			arg:            "binrep push hoge",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
@@ -134,20 +186,14 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep pull",
 		},
 		{
-			desc:           "pull: missing endpoint error",
-			arg:            "binrep pull",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "pull: arguments error (len: 1)",
-			arg:            "binrep pull --endpoint s3://testing hoge",
+			arg:            "binrep pull hoge",
 			expectedStatus: 2,
 			expectedSubOut: "too few or many arguments",
 		},
 		{
 			desc:           "pull: arguments error (len: 3)",
-			arg:            "binrep pull --endpoint s3://testing hoge foo bar",
+			arg:            "binrep pull hoge foo bar",
 			expectedStatus: 2,
 			expectedSubOut: "too few or many arguments",
 		},

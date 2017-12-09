@@ -18,7 +18,6 @@ type PushParam struct {
 	Timestamp    string
 	KeepReleases int
 	Force        bool
-	Endpoint     string
 }
 
 // Push pushes the binary files of binPaths as release of the name(<host>/<user>/<project>).
@@ -42,7 +41,7 @@ func Push(param *PushParam, name string, binPaths []string) error {
 	}
 
 	sess := session.New()
-	st := storage.New(sess, param.Endpoint)
+	st := storage.New(sess)
 
 	if !param.Force {
 		ok, err := st.ExistRelease(name)

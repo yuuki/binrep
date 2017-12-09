@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/yuuki/binrep/pkg/config"
 	"github.com/yuuki/binrep/pkg/release"
 )
 
@@ -45,9 +46,9 @@ type _s3 struct {
 }
 
 // New creates a StorageAPI client object.
-func New(sess *session.Session, bucket string) API {
+func New(sess *session.Session) API {
 	return &_s3{
-		bucket:   strings.TrimPrefix(bucket, "s3://"),
+		bucket:   strings.TrimPrefix(config.Config.BackendEndpoint, "s3://"),
 		svc:      s3.New(sess),
 		uploader: s3manager.NewUploader(sess),
 	}
