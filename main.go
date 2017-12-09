@@ -61,8 +61,18 @@ func (cli *CLI) Run(args []string) int {
 			fmt.Fprint(cli.errStream, helpText)
 			return 0
 		case "-e", "--endpoint":
+			if len(args) <= i+1 {
+				fmt.Fprint(cli.errStream, "want --endpoint value")
+				fmt.Fprint(cli.errStream, helpText)
+				return 1
+			}
 			config.Config.BackendEndpoint = args[i+1]
 			i += 2
+			// No subcommand error
+			if len(args) <= i {
+				fmt.Fprint(cli.errStream, helpText)
+				return 1
+			}
 		default:
 			fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option", cmd)
 			fmt.Fprint(cli.errStream, helpText)
