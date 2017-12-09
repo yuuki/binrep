@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.3](https://github.com/yuuki/binrep/compare/v0.6.2...v0.6.3) (2017-12-10)
+
+*  Support endpoint setting via environment variable (BINREP_BACKEND_ENDPOINT) [#12](https://github.com/yuuki/binrep/pull/12) ([yuuki](https://github.com/yuuki))
+
 ## [v0.6.2](https://github.com/yuuki/binrep/compare/v0.6.0...v0.6.2) (2017-12-08)
 
 * Fix bug that cannot push new project release [#11](https://github.com/yuuki/binrep/pull/11) ([yuuki](https://github.com/yuuki))
