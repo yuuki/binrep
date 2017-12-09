@@ -38,14 +38,13 @@ devel-deps: deps
 	go get github.com/motemen/gobump
 	go get github.com/Songmu/ghch
 
-.PHONY: generate
-generate:
-	go generate -x ./...
-
 .PHONY: credits
 credits:
 	scripts/credits > $(CREDITS)
+ifneq (,$(git status -s $(CREDITS)))
+	go generate -x .
+endif
 
 .PHONY: release
-release: credits generate
+release: credits
 	scripts/release
