@@ -6,17 +6,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/yuuki/binrep/pkg/config"
 )
 
-func TestMain(m *testing.M) {
+func TestRun_global(t *testing.T) {
 	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", "s3://binrep-testing"); err != nil {
 		panic(err)
 	}
-	code := m.Run()
-	os.Exit(code)
-}
 
-func TestRun_global(t *testing.T) {
 	tests := []struct {
 		desc           string
 		arg            string
@@ -63,6 +61,7 @@ func TestRun_global(t *testing.T) {
 }
 
 func TestRun_endpoint(t *testing.T) {
+	// Clear endpoint
 	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", ""); err != nil {
 		panic(err)
 	}
@@ -86,8 +85,16 @@ func TestRun_endpoint(t *testing.T) {
 			expectedStatus: 1,
 			expectedSubErr: "want --endpoint value",
 		},
+		{
+			desc:           "endpoint required error",
+			arg:            "binrep list",
+			expectedStatus: 2,
+			expectedSubErr: "BackendEndpoint required",
+		},
 	}
 	for _, tc := range tests {
+		config.Config.BackendEndpoint = ""
+
 		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
 		cli := &CLI{outStream: outStream, errStream: errStream}
 		args := strings.Split(tc.arg, " ")
@@ -107,6 +114,10 @@ func TestRun_endpoint(t *testing.T) {
 }
 
 func TestRun_subCommand(t *testing.T) {
+	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", "s3://binrep-testing"); err != nil {
+		panic(err)
+	}
+
 	tests := []struct {
 		desc           string
 		arg            string

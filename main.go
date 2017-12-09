@@ -100,6 +100,7 @@ Options:
 `
 
 func (cli *CLI) runCommand(cmd string, args []string) error {
+	fmt.Println(cmd, args, config.Config.BackendEndpoint)
 	if config.Config.BackendEndpoint == "" {
 		return errors.New("BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT")
 	}
