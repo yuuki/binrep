@@ -46,13 +46,20 @@ $ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/insta
 - GOOS: 'linux' or 'darwin'
 - GOARCH: '386' or 'amd64'
 
+## Set backend endpoint
+
+```sh
+export BINREP_BACKEND_ENDPOINT='s3://binrep-bucket'
+```
+
+or `binrep --endpoint 's3://binrep-bucket' ...`
+
 ## Commands
 
 ### list
 
 ```sh
-$ binrep list --endpoint s3://binrep-bucket
-github.com/fujiwara/stretcher/20171013135903/
+$ binrep list github.com/fujiwara/stretcher/20171013135903/
 github.com/fujiwara/stretcher/20171014110009/
 github.com/motemen/ghq/20171013140424/
 github.com/yuuki/droot/20171017152626/
@@ -64,7 +71,7 @@ github.com/yuuki/droot/20171019204009/
 ### show
 
 ```sh
-$ binrep show --endpoint s3://binrep-bucket github.com/yuuki/droot
+$ binrep show github.com/yuuki/droot
 NAME                    TIMESTAMP       BINNARY1
 github.com/yuuki/droot  20171019204009  droot//2e6ccc3
 ```
@@ -72,7 +79,7 @@ github.com/yuuki/droot  20171019204009  droot//2e6ccc3
 ### push
 
 ```sh
-$ binrep push --endpoint s3://binrep-bucket github.com/yuuki/droot ./droot
+$ binrep push github.com/yuuki/droot ./droot
 --> Uploading [./droot] to s3://binrep-bucket/github.com/yuuki/droot/20171020152356
 Uploaded to s3://binrep-bucket/github.com/yuuki/droot/20171020152356
 --> Cleaning up the old releases
@@ -84,7 +91,7 @@ Cleaned up 20171017152626
 ### pull
 
 ```sh
-$ binrep pull --endpoint s3://binrep-bucket github.com/yuuki/droot /usr/local/bin
+$ binrep pull github.com/yuuki/droot /usr/local/bin
 --> Downloading s3://binrep-bucket/github.com/yuuki/binrep/20171019204009 to /usr/local/bin
 ```
 
