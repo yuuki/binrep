@@ -40,6 +40,12 @@ func TestRun_global(t *testing.T) {
 			expectedStatus: 0,
 			expectedSubOut: "= Binrep licensed under: =",
 		},
+		{
+			desc:           "help flag",
+			arg:            "binrep --help",
+			expectedStatus: 0,
+			expectedSubErr: "Usage: binrep",
+		},
 	}
 	for _, tc := range tests {
 		outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
