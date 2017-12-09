@@ -46,6 +46,21 @@ $ curl -fsSL https://raw.githubusercontent.com/yuuki/binrep/master/scripts/insta
 - GOOS: 'linux' or 'darwin'
 - GOARCH: '386' or 'amd64'
 
+## Set AWS environment
+
+```sh
+export AWS_REGION=us-east-1
+export AWS_PROFILE=[your profile]
+```
+
+or
+
+```sh
+export AWS_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=[your access key]
+export AWS_SECRET_ACCESS_KEY=[your secret key]
+```
+
 ## Set backend endpoint
 
 ```sh
