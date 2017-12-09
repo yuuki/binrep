@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+credits='vendor/CREDITS'
+if [[ $(git status -s "${credits}") != "" ]]; then
+	git add ${credits} && git commit -m 'Update CREDITS'
+fi
+
 if [[ $(git status -s) != "" ]]; then
     echo 2>&1 "git is currently in a dirty state"
     exit 1
