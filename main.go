@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/yuuki/binrep/pkg/command"
+	"github.com/yuuki/binrep/pkg/config"
 )
 
 const (
@@ -39,34 +40,34 @@ func (cli *CLI) Run(args []string) int {
 		return 2
 	}
 
-	var err error
+	config.Load()
 
-	switch cmd := args[1]; cmd {
-	case "list":
-		err = cli.doList(args[2:])
-	case "show":
-		err = cli.doShow(args[2:])
-	case "push":
-		err = cli.doPush(args[2:])
-	case "pull":
-		err = cli.doPull(args[2:])
-	case "--version":
-		fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
-		return 0
-	case "--credits":
-		fmt.Fprintln(cli.outStream, creditsText)
-		return 0
-	case "-h", "--help":
-		fmt.Fprint(cli.errStream, helpText)
-	default:
-		fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option", cmd)
-		fmt.Fprint(cli.errStream, helpText)
-		return 1
-	}
-
-	if err != nil {
-		fmt.Fprintln(cli.errStream, err)
-		return 2
+	i := 1
+	for i < len(args) {
+		switch cmd := args[i]; cmd {
+		case "list", "show", "push", "pull":
+			if err := cli.runCommand(cmd, args[i+1:]); err != nil {
+				fmt.Fprintln(cli.errStream, err)
+				return 2
+			}
+			return 0
+		case "--version":
+			fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
+			return 0
+		case "--credits":
+			fmt.Fprintln(cli.outStream, creditsText)
+			return 0
+		case "-h", "--help":
+			fmt.Fprint(cli.errStream, helpText)
+			return 0
+		case "-e", "--endpoint":
+			config.Config.BackendEndpoint = args[i+1]
+			i += 2
+		default:
+			fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option", cmd)
+			fmt.Fprint(cli.errStream, helpText)
+			return 1
+		}
 	}
 
 	return 0
@@ -88,6 +89,24 @@ Options:
   --help, -h            print help
 `
 
+func (cli *CLI) runCommand(cmd string, args []string) error {
+	if config.Config.BackendEndpoint == "" {
+		return errors.New("BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT")
+	}
+
+	switch cmd {
+	case "list":
+		return cli.doList(args)
+	case "show":
+		return cli.doShow(args)
+	case "push":
+		return cli.doPush(args)
+	case "pull":
+		return cli.doPull(args)
+	}
+	return nil
+}
+
 func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 	flags := flag.NewFlagSet(name, flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
@@ -103,20 +122,13 @@ Usage: binrep list [options]
 show releases on remote repository
 
 Options:
-  --endpoint, -e   s3 URI
 `
 
 func (cli *CLI) doList(args []string) error {
 	var param command.ListParam
 	flags := cli.prepareFlags(listHelpText)
-	flags.StringVar(&param.Endpoint, "e", "", "")
-	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
-	}
-	if param.Endpoint == "" {
-		fmt.Fprint(cli.errStream, listHelpText)
-		return errors.Errorf("--endpoint required")
 	}
 	if len(flags.Args()) != 0 {
 		fmt.Fprint(cli.errStream, listHelpText)
@@ -131,7 +143,6 @@ Usage: binrep show [options] <host>/<user>/<project>
 show binary information.
 
 Options:
-  --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
 `
 
@@ -140,14 +151,8 @@ func (cli *CLI) doShow(args []string) error {
 	flags := cli.prepareFlags(showHelpText)
 	flags.StringVar(&param.Timestamp, "t", "", "")
 	flags.StringVar(&param.Timestamp, "timestamp", "", "")
-	flags.StringVar(&param.Endpoint, "e", "", "")
-	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
-	}
-	if param.Endpoint == "" {
-		fmt.Fprint(cli.errStream, showHelpText)
-		return errors.Errorf("--endpoint required")
 	}
 	if len(flags.Args()) < 1 {
 		fmt.Fprint(cli.errStream, showHelpText)
@@ -162,7 +167,6 @@ Usage: binrep push [options] <host>/<user>/<project> /path/to/binary ...
 push binary.
 
 Options:
-  --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
   --keep-releases, -k	the number of releases that it keeps (default: 5)
   --force, -f		always push even if each checksum of binaries is the same with each one on remote storage (default: false)
@@ -177,14 +181,8 @@ func (cli *CLI) doPush(args []string) error {
 	flags.IntVar(&param.KeepReleases, "keep-releases", defaultKeepReleases, "")
 	flags.BoolVar(&param.Force, "f", false, "")
 	flags.BoolVar(&param.Force, "force", false, "")
-	flags.StringVar(&param.Endpoint, "e", "", "")
-	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
-	}
-	if param.Endpoint == "" {
-		fmt.Fprint(cli.errStream, pushHelpText)
-		return errors.Errorf("--endpoint required")
 	}
 	argLen := len(flags.Args())
 	if argLen < 2 {
@@ -200,7 +198,6 @@ Usage: binrep pull [options] <host>/<user>/<project> /path/to/binary
 pull binary.
 
 Options:
-  --endpoint, -e	s3 uri
   --timestamp, -t       binary timestamp
   --max-bandwidth, -bw	max bandwidth for download binaries (Bytes/sec) eg. '1 MB', '1024 KB'
 `
@@ -212,14 +209,8 @@ func (cli *CLI) doPull(args []string) error {
 	flags.StringVar(&param.Timestamp, "timestamp", "", "")
 	flags.StringVar(&param.MaxBandWidth, "bw", "", "")
 	flags.StringVar(&param.MaxBandWidth, "max-bandwidth", "", "")
-	flags.StringVar(&param.Endpoint, "e", "", "")
-	flags.StringVar(&param.Endpoint, "endpoint", "", "")
 	if err := flags.Parse(args); err != nil {
 		return err
-	}
-	if param.Endpoint == "" {
-		fmt.Fprint(cli.errStream, pullHelpText)
-		return errors.Errorf("--endpoint required")
 	}
 	if len(flags.Args()) != 2 {
 		fmt.Fprint(cli.errStream, pullHelpText)

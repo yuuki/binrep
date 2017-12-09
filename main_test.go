@@ -3,9 +3,18 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	if err := os.Setenv("BINREP_BACKEND_ENDPOINT", "s3://binrep-testing"); err != nil {
+		panic(err)
+	}
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestRun_global(t *testing.T) {
 	tests := []struct {
@@ -68,14 +77,8 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep list",
 		},
 		{
-			desc:           "list: missing endpoint error",
-			arg:            "binrep list",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "list: extra arguments error",
-			arg:            "binrep list --endpoint s3://testing hoge",
+			arg:            "binrep list hoge",
 			expectedStatus: 2,
 			expectedSubOut: "extra arguments",
 		},
@@ -88,14 +91,8 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep show",
 		},
 		{
-			desc:           "show: missing endpoint error",
-			arg:            "binrep show",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "show: arguments error",
-			arg:            "binrep show --endpoint s3://testing",
+			arg:            "binrep show",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
@@ -108,20 +105,14 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep push",
 		},
 		{
-			desc:           "push: missing endpoint error",
-			arg:            "binrep push",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "push: arguments error (len: 0)",
-			arg:            "binrep push --endpoint s3://testing",
+			arg:            "binrep push",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
 		{
 			desc:           "push: arguments error (len: 1)",
-			arg:            "binrep push --endpoint s3://testing hoge",
+			arg:            "binrep push hoge",
 			expectedStatus: 2,
 			expectedSubOut: "too few arguments",
 		},
@@ -134,20 +125,14 @@ func TestRun_subCommand(t *testing.T) {
 			expectedSubOut: "Usage: binrep pull",
 		},
 		{
-			desc:           "pull: missing endpoint error",
-			arg:            "binrep pull",
-			expectedStatus: 2,
-			expectedSubOut: "--endpoint required",
-		},
-		{
 			desc:           "pull: arguments error (len: 1)",
-			arg:            "binrep pull --endpoint s3://testing hoge",
+			arg:            "binrep pull hoge",
 			expectedStatus: 2,
 			expectedSubOut: "too few or many arguments",
 		},
 		{
 			desc:           "pull: arguments error (len: 3)",
-			arg:            "binrep pull --endpoint s3://testing hoge foo bar",
+			arg:            "binrep pull hoge foo bar",
 			expectedStatus: 2,
 			expectedSubOut: "too few or many arguments",
 		},

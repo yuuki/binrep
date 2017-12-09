@@ -10,13 +10,12 @@ import (
 
 // ListParam represents the option parameter of `list`.
 type ListParam struct {
-	Endpoint string
 }
 
 // List lists releases.
 func List(param *ListParam) error {
 	sess := session.New()
-	st := storage.New(sess, param.Endpoint)
+	st := storage.New(sess)
 
 	err := st.WalkReleases(1, func(rel *release.Release) error {
 		fmt.Println(rel.Prefix())
