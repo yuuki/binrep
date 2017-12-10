@@ -82,7 +82,7 @@ ARG_LOOP:
 				return 1
 			}
 		default:
-			fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option", cmd)
+			fmt.Fprintf(cli.errStream, "%s is undefined subcommand or option\n", cmd)
 			fmt.Fprint(cli.errStream, helpText)
 			return 1
 		}
