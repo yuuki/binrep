@@ -96,8 +96,7 @@ ARG_LOOP:
 	return 0
 }
 
-var helpText = `
-Usage: binrep [options]
+var helpText = `Usage: binrep [options]
 
   The static binary repository manager.
 
@@ -128,8 +127,7 @@ func (cli *CLI) prepareFlags(help string) *flag.FlagSet {
 	return flags
 }
 
-var listHelpText = `
-Usage: binrep list [options]
+var listHelpText = `Usage: binrep list [options]
 
 show releases on remote repository
 
@@ -152,8 +150,7 @@ func (cli *CLI) doList(args []string) error {
 	return command.List(&param)
 }
 
-var showHelpText = `
-Usage: binrep show [options] <host>/<user>/<project>
+var showHelpText = `Usage: binrep show [options] <host>/<user>/<project>
 
 show binary information.
 
@@ -179,8 +176,7 @@ func (cli *CLI) doShow(args []string) error {
 	return command.Show(&param, flags.Arg(0))
 }
 
-var pushHelpText = `
-Usage: binrep push [options] <host>/<user>/<project> /path/to/binary ...
+var pushHelpText = `Usage: binrep push [options] <host>/<user>/<project> /path/to/binary ...
 
 push binary.
 
@@ -213,8 +209,7 @@ func (cli *CLI) doPush(args []string) error {
 	return command.Push(&param, flags.Arg(0), flags.Args()[1:argLen])
 }
 
-var pullHelpText = `
-Usage: binrep pull [options] <host>/<user>/<project> /path/to/binary
+var pullHelpText = `Usage: binrep pull [options] <host>/<user>/<project> /path/to/binary
 
 pull binary.
 
