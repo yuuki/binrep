@@ -23,6 +23,12 @@ func TestRun_global(t *testing.T) {
 		expectedSubErr string
 	}{
 		{
+			desc:           "no arg",
+			arg:            "binrep",
+			expectedStatus: 2,
+			expectedSubErr: "Usage: binrep",
+		},
+		{
 			desc:           "version flag",
 			arg:            "binrep --version",
 			expectedStatus: 0,
@@ -92,16 +98,52 @@ func TestRun_endpoint(t *testing.T) {
 			expectedSubErr: "want --endpoint value",
 		},
 		{
-			desc:           "no subcommand --help option",
+			desc:           "no list --help option",
 			arg:            "binrep list",
 			expectedStatus: 2,
 			expectedSubErr: "BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT",
 		},
 		{
-			desc:           "subcommand --help option",
+			desc:           "list --help option",
 			arg:            "binrep list --help",
 			expectedStatus: 2,
 			expectedSubErr: "Usage: binrep list",
+		},
+		{
+			desc:           "no show --help option",
+			arg:            "binrep list",
+			expectedStatus: 2,
+			expectedSubErr: "BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT",
+		},
+		{
+			desc:           "show --help option",
+			arg:            "binrep show --help",
+			expectedStatus: 2,
+			expectedSubErr: "Usage: binrep show",
+		},
+		{
+			desc:           "no push --help option",
+			arg:            "binrep push yuuki/testing ./dummy",
+			expectedStatus: 2,
+			expectedSubErr: "BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT",
+		},
+		{
+			desc:           "push --help option",
+			arg:            "binrep push --help",
+			expectedStatus: 2,
+			expectedSubErr: "Usage: binrep push",
+		},
+		{
+			desc:           "no pull --help option",
+			arg:            "binrep pull yuuki/testing ./dummy",
+			expectedStatus: 2,
+			expectedSubErr: "BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT",
+		},
+		{
+			desc:           "pull --help option",
+			arg:            "binrep pull --help",
+			expectedStatus: 2,
+			expectedSubErr: "Usage: binrep pull",
 		},
 	}
 	for _, tc := range tests {
