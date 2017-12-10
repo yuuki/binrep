@@ -16,7 +16,6 @@ import (
 
 // PullParam represents the option parameter of `pull`.
 type PullParam struct {
-	BinName      string
 	Timestamp    string
 	MaxBandWidth string
 }
