@@ -92,10 +92,16 @@ func TestRun_endpoint(t *testing.T) {
 			expectedSubErr: "want --endpoint value",
 		},
 		{
-			desc:           "endpoint required error",
+			desc:           "no subcommand --help option",
 			arg:            "binrep list",
 			expectedStatus: 2,
-			expectedSubErr: "BackendEndpoint required",
+			expectedSubErr: "BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT",
+		},
+		{
+			desc:           "subcommand --help option",
+			arg:            "binrep list --help",
+			expectedStatus: 2,
+			expectedSubErr: "Usage: binrep list",
 		},
 	}
 	for _, tc := range tests {

@@ -42,15 +42,23 @@ func (cli *CLI) Run(args []string) int {
 
 	config.Load()
 
+	var err error
 	i := 1
+ARG_LOOP:
 	for i < len(args) {
 		switch cmd := args[i]; cmd {
-		case "list", "show", "push", "pull":
-			if err := cli.runCommand(cmd, args[i+1:]); err != nil {
-				fmt.Fprintln(cli.errStream, err)
-				return 2
-			}
-			return 0
+		case "list":
+			err = cli.doList(args[i+1:])
+			break ARG_LOOP
+		case "show":
+			err = cli.doShow(args[i+1:])
+			break ARG_LOOP
+		case "push":
+			err = cli.doPush(args[i+1:])
+			break ARG_LOOP
+		case "pull":
+			err = cli.doPull(args[i+1:])
+			break ARG_LOOP
 		case "--version":
 			fmt.Fprintf(cli.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
 			return 0
@@ -80,6 +88,11 @@ func (cli *CLI) Run(args []string) int {
 		}
 	}
 
+	if err != nil {
+		fmt.Fprintln(cli.errStream, err)
+		return 2
+	}
+
 	return 0
 }
 
@@ -99,21 +112,9 @@ Options:
   --help, -h            print help
 `
 
-func (cli *CLI) runCommand(cmd string, args []string) error {
-	fmt.Println(cmd, args, config.Config.BackendEndpoint)
+func validateConfig() error {
 	if config.Config.BackendEndpoint == "" {
 		return errors.New("BackendEndpoint required. Use --endpoint or BINREP_BACKEND_ENDPOINT")
-	}
-
-	switch cmd {
-	case "list":
-		return cli.doList(args)
-	case "show":
-		return cli.doShow(args)
-	case "push":
-		return cli.doPush(args)
-	case "pull":
-		return cli.doPull(args)
 	}
 	return nil
 }
@@ -145,6 +146,9 @@ func (cli *CLI) doList(args []string) error {
 		fmt.Fprint(cli.errStream, listHelpText)
 		return errors.Errorf("extra arguments")
 	}
+	if err := validateConfig(); err != nil {
+		return err
+	}
 	return command.List(&param)
 }
 
@@ -168,6 +172,9 @@ func (cli *CLI) doShow(args []string) error {
 	if len(flags.Args()) < 1 {
 		fmt.Fprint(cli.errStream, showHelpText)
 		return errors.Errorf("too few arguments")
+	}
+	if err := validateConfig(); err != nil {
+		return err
 	}
 	return command.Show(&param, flags.Arg(0))
 }
@@ -200,6 +207,9 @@ func (cli *CLI) doPush(args []string) error {
 		fmt.Fprint(cli.errStream, pushHelpText)
 		return errors.Errorf("too few arguments")
 	}
+	if err := validateConfig(); err != nil {
+		return err
+	}
 	return command.Push(&param, flags.Arg(0), flags.Args()[1:argLen])
 }
 
@@ -226,6 +236,9 @@ func (cli *CLI) doPull(args []string) error {
 	if len(flags.Args()) != 2 {
 		fmt.Fprint(cli.errStream, pullHelpText)
 		return errors.Errorf("too few or many arguments")
+	}
+	if err := validateConfig(); err != nil {
+		return err
 	}
 	return command.Pull(&param, flags.Arg(0), flags.Arg(1))
 }
