@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.4](https://github.com/yuuki/binrep/compare/v0.6.3...v0.6.4) (2017-12-11)
+
+* Fix bug that subcommands don't display help [#13](https://github.com/yuuki/binrep/pull/13) ([yuuki](https://github.com/yuuki))
+
 ## [v0.6.3](https://github.com/yuuki/binrep/compare/v0.6.2...v0.6.3) (2017-12-10)
 
 *  Support endpoint setting via environment variable (BINREP_BACKEND_ENDPOINT) [#12](https://github.com/yuuki/binrep/pull/12) ([yuuki](https://github.com/yuuki))
